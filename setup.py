@@ -10,6 +10,10 @@ import epyparse
 readme = open("README").read()
 changes = open("docs/changes.rst").read()
 long_description = readme + "\n" + changes
+requires = [
+    'epydoc',
+    'modargs',
+]
 
 setup(
     name="epyparse",
@@ -23,5 +27,6 @@ setup(
     scripts = [
         os.path.join(srcdir, 'bin', 'epyparse'),
     ],
+    install_requires=requires,
 )
 
