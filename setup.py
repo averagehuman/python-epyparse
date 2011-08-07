@@ -21,7 +21,7 @@ setup(
     download_url="http://pypi.python.org/packages/source/e/epyparse/epyparse-%s.tar.gz" % epyparse.__version__,
     py_modules=['epyparse'],
     scripts = [
-        pathjoin(srcdir, 'bin', 'epyparse'),
+        os.path.join(srcdir, 'bin', 'epyparse'),
     ],
 )
 
