@@ -1,4 +1,40 @@
 #!/usr/bin/env python
+"""
+epyparse - python API info
 
-from epyparse import Parser
+"""
+
+def usage_command(help=False):
+    if help:
+        help_command()
+    else:
+        sys.stdout.write("epyparse <file> [options]\n")
+
+def help_command():
+    sys.stdout.write(__doc__)
+
+def print_command(path=None):
+    assert path is not None
+    if urlparse(path).netloc.startswith('https'):
+        from urllib import urlopen
+    else:
+        epyparse.pprint(path)
+
+functions = dict((k,v) for (k, v) in locals().items() if k[0] != '_')
+commands = set(k[:-len('_command')] for k in functions if k.endswith('_command'))
+dispatch = type('__main__', (object,), functions)
+
+if __name__ == '__main__':
+    import os, sys
+    import json
+    from urlparse import urlparse
+
+    from modargs import args
+
+    import epyparse
+
+    argv = sys.argv[1:]
+    if argv and argv[0] not in commands:
+        argv = ['print', '--path'] + argv
+    args.parse_and_run_command(argv, dispatch, default_command='usage')
 

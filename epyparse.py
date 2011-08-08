@@ -51,82 +51,82 @@ file extension::
     ...     with open('TESTOUT/' + item['fullname'], 'w+b') as fp:
     ...         json.dump(item, fp)
     ...
-    epydoc.apidoc.StaticMethodDoc
-    epydoc.apidoc.VariableDoc.is_detailed
-    epydoc.apidoc.VariableDoc.__repr__
-    epydoc.apidoc.VariableDoc.apidoc_links
-    epydoc.apidoc.VariableDoc.__init__
-    epydoc.apidoc.VariableDoc
-    epydoc.apidoc.ClassMethodDoc
-    epydoc.apidoc.ClassDoc.is_newstyle_class
+    epydoc.apidoc.pp_apidoc
+    epydoc.apidoc.reachable_valdocs
+    epydoc.apidoc.APIDoc.__cmp__
+    epydoc.apidoc.APIDoc.__hash__
+    epydoc.apidoc.APIDoc.__init__
+    epydoc.apidoc.APIDoc.__repr__
+    epydoc.apidoc.APIDoc.apidoc_links
+    epydoc.apidoc.APIDoc.is_detailed
+    epydoc.apidoc.APIDoc.merge_and_overwrite
+    epydoc.apidoc.APIDoc.pp
+    epydoc.apidoc.APIDoc.pp
+    epydoc.apidoc.APIDoc.specialize_to
+    epydoc.apidoc.APIDoc
     epydoc.apidoc.ClassDoc.apidoc_links
     epydoc.apidoc.ClassDoc.is_exception
-    epydoc.apidoc.ClassDoc.select_variables
+    epydoc.apidoc.ClassDoc.is_newstyle_class
     epydoc.apidoc.ClassDoc.is_type
     epydoc.apidoc.ClassDoc.mro
+    epydoc.apidoc.ClassDoc.select_variables
     epydoc.apidoc.ClassDoc
-    epydoc.apidoc.RoutineDoc.all_args
-    epydoc.apidoc.RoutineDoc.is_detailed
-    epydoc.apidoc.RoutineDoc
-    epydoc.apidoc.pp_apidoc
-    epydoc.apidoc.NamespaceDoc.apidoc_links
-    epydoc.apidoc.NamespaceDoc.init_sorted_variables
-    epydoc.apidoc.NamespaceDoc.is_detailed
-    epydoc.apidoc.NamespaceDoc.init_variable_groups
-    epydoc.apidoc.NamespaceDoc.report_unused_groups
-    epydoc.apidoc.NamespaceDoc.group_names
-    epydoc.apidoc.NamespaceDoc.__init__
-    epydoc.apidoc.NamespaceDoc
-    epydoc.apidoc.DottedName.contextualize
-    epydoc.apidoc.DottedName.dominates
-    epydoc.apidoc.DottedName.container
-    epydoc.apidoc.DottedName.__getitem__
-    epydoc.apidoc.DottedName.__str__
-    epydoc.apidoc.DottedName.InvalidDottedName
-    epydoc.apidoc.DottedName.__radd__
-    epydoc.apidoc.DottedName.__len__
-    epydoc.apidoc.DottedName.__repr__
-    epydoc.apidoc.DottedName.__add__
-    epydoc.apidoc.DottedName.__hash__
-    epydoc.apidoc.DottedName.__cmp__
-    epydoc.apidoc.DottedName.__init__
-    epydoc.apidoc.DottedName
-    epydoc.apidoc.reachable_valdocs
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.is_detailed
-    epydoc.apidoc.APIDoc.__init__
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.__cmp__
-    epydoc.apidoc.APIDoc.apidoc_links
-    epydoc.apidoc.APIDoc.merge_and_overwrite
-    epydoc.apidoc.APIDoc.specialize_to
-    epydoc.apidoc.APIDoc.__repr__
-    epydoc.apidoc.APIDoc.__hash__
-    epydoc.apidoc.APIDoc
-    epydoc.apidoc.PropertyDoc.apidoc_links
-    epydoc.apidoc.PropertyDoc.is_detailed
-    epydoc.apidoc.PropertyDoc
-    epydoc.apidoc.GenericValueDoc.is_detailed
-    epydoc.apidoc.GenericValueDoc
-    epydoc.apidoc.DocIndex.reachable_valdocs
-    epydoc.apidoc.DocIndex.get_vardoc
-    epydoc.apidoc.DocIndex.read_profiling_info
-    epydoc.apidoc.DocIndex.get_valdoc
+    epydoc.apidoc.ClassMethodDoc
+    epydoc.apidoc.DocIndex.__init__
     epydoc.apidoc.DocIndex.container
     epydoc.apidoc.DocIndex.find
-    epydoc.apidoc.DocIndex.__init__
+    epydoc.apidoc.DocIndex.get_valdoc
+    epydoc.apidoc.DocIndex.get_vardoc
+    epydoc.apidoc.DocIndex.reachable_valdocs
+    epydoc.apidoc.DocIndex.read_profiling_info
     epydoc.apidoc.DocIndex
+    epydoc.apidoc.DottedName.InvalidDottedName
+    epydoc.apidoc.DottedName.__add__
+    epydoc.apidoc.DottedName.__cmp__
+    epydoc.apidoc.DottedName.__getitem__
+    epydoc.apidoc.DottedName.__hash__
+    epydoc.apidoc.DottedName.__init__
+    epydoc.apidoc.DottedName.__len__
+    epydoc.apidoc.DottedName.__radd__
+    epydoc.apidoc.DottedName.__repr__
+    epydoc.apidoc.DottedName.__str__
+    epydoc.apidoc.DottedName.container
+    epydoc.apidoc.DottedName.contextualize
+    epydoc.apidoc.DottedName.dominates
+    epydoc.apidoc.DottedName
+    epydoc.apidoc.GenericValueDoc.is_detailed
+    epydoc.apidoc.GenericValueDoc
     epydoc.apidoc.ModuleDoc.apidoc_links
     epydoc.apidoc.ModuleDoc.init_submodule_groups
     epydoc.apidoc.ModuleDoc.select_variables
     epydoc.apidoc.ModuleDoc
-    epydoc.apidoc.ValueDoc.summary_pyval_repr
-    epydoc.apidoc.ValueDoc.apidoc_links
-    epydoc.apidoc.ValueDoc.__setstate__
+    epydoc.apidoc.NamespaceDoc.__init__
+    epydoc.apidoc.NamespaceDoc.apidoc_links
+    epydoc.apidoc.NamespaceDoc.group_names
+    epydoc.apidoc.NamespaceDoc.init_sorted_variables
+    epydoc.apidoc.NamespaceDoc.init_variable_groups
+    epydoc.apidoc.NamespaceDoc.is_detailed
+    epydoc.apidoc.NamespaceDoc.report_unused_groups
+    epydoc.apidoc.NamespaceDoc
+    epydoc.apidoc.PropertyDoc.apidoc_links
+    epydoc.apidoc.PropertyDoc.is_detailed
+    epydoc.apidoc.PropertyDoc
+    epydoc.apidoc.RoutineDoc.all_args
+    epydoc.apidoc.RoutineDoc.is_detailed
+    epydoc.apidoc.RoutineDoc
+    epydoc.apidoc.StaticMethodDoc
     epydoc.apidoc.ValueDoc.__getstate__
     epydoc.apidoc.ValueDoc.__repr__
+    epydoc.apidoc.ValueDoc.__setstate__
+    epydoc.apidoc.ValueDoc.apidoc_links
     epydoc.apidoc.ValueDoc.pyval_repr
+    epydoc.apidoc.ValueDoc.summary_pyval_repr
     epydoc.apidoc.ValueDoc
+    epydoc.apidoc.VariableDoc.__init__
+    epydoc.apidoc.VariableDoc.__repr__
+    epydoc.apidoc.VariableDoc.apidoc_links
+    epydoc.apidoc.VariableDoc.is_detailed
+    epydoc.apidoc.VariableDoc
     epydoc.apidoc
 
 Deserialize to `Object`::
@@ -145,7 +145,8 @@ Deserialize to `Object`::
     >>> obj.name
     u'merge_and_overwrite'
 
-Object parent::
+Because we have serialized the object parent to the same directory, we can
+retrieve it as well::
 
     >>> parent = obj.get_parent()
     >>> parent.fullname
@@ -167,10 +168,13 @@ Object parent::
     epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
 
-Object children::
+This function object has no children::
 
     >>> obj.get_children()
     []
+
+but its parent does::
+
     >>> for child in sorted(parent.get_children(), key=lambda d: d['fullname']):
     ...     print child.type, ' -> ', child.name
     function  ->  __cmp__
@@ -200,19 +204,42 @@ from os.path import exists as pathexists, join as pathjoin, dirname, basename, a
 import operator
 import re
 import json
+import textwrap
 
 from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
 
-nulls = set([None, UNKNOWN])
+NULLS = set([None, UNKNOWN])
+MODULE_ORDER = [
+    ModuleDoc,
+    UNKNOWN,
+    RoutineDoc,
+    ClassDoc,
+]
+
+CLASS_ORDER = [
+    UNKNOWN,
+    ClassDoc,
+    RoutineDoc,
+]
+RX_DOTTED_NAME = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
 
 def notnull(val):
-    return not any(operator.is_(val, obj) for obj in nulls)
-
-rx_dotted_name = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
+    return not any(operator.is_(val, obj) for obj in NULLS)
 
 def valid_dotted_name(name):
-    return bool(rx_dotted_name.match(name))
+    return bool(RX_DOTTED_NAME.match(name))
+
+def sort_key(parent_type):
+    ordering = MODULE_ORDER
+    if parent_type is ClassDoc:
+        ordering = CLASS_ORDER
+    def object_order(var):
+        try:
+            return ordering.index(type(var.value)), str(var.value.canonical_name)
+        except ValueError:
+            return (-1, '')
+    return object_order
 
 __all__ = [
     'Parser', 'Object',
@@ -220,15 +247,27 @@ __all__ = [
 ]
 
 def parsed(module_or_filename):
+    """
+    Parse a Python module or file, return a nested dictionary of API objects
+    """
     return Parser().parse(module_or_filename)
 
 def flattened(module_or_filename):
-    return Parser().flatten(module_or_filename)
+    """
+    Parse a Python module or file, return a list of dictionaries of API objects
+    """
+    return list(Parser().flatten(module_or_filename))
 
 def pprint(module_or_filename, out=sys.stdout):
+    """
+    Pretty print the contents of a Python module or file
+    """
     Parser().pprint(module_or_filename, out)
 
 def objectify(json_file):
+    """
+    Convert a JSON-serialized API object to a dict-like object
+    """
     return Object.from_json(json_file)
 
 class Object(dict):
@@ -352,6 +391,7 @@ class Parser(object):
         except:
             children = ()
         else:
+            vals = sorted(vals, key=sort_key(apitype))
             children = (self.iterparse(val.value, parent_type=apitype) for val in vals)
         yield info, children
 
@@ -384,10 +424,18 @@ class Parser(object):
         return visit(self.iterparse(module_or_filename))
 
     def pprint(self, module_or_filename, out):
-        def visit(iterable, indent=0):
+        tab = ' ' * 4
+        def visit(iterable, level=0):
+            indent = level * tab
             for info, children in iterable:
-                s = ' ' * indent + info['fullname']
-                if info['type'] == 'function':
+                name = info['fullname'].rpartition('.')[2]
+                typ = info['type']
+                if typ == 'function':
+                    typ = 'def'
+                elif typ == 'module':
+                    name = info['fullname']
+                out.write(indent + typ + ' ' + name)
+                if typ == 'def':
                     args = info.get('args', [])
                     params = info.get('params')
                     if params:
@@ -398,20 +446,22 @@ class Parser(object):
                     opt = info.get('kwarg')
                     if opt:
                         args.append('**' + opt)
-                    s += '(%s)' % ', '.join(args)
-                doc = info.get('docstring')
-                if doc:
-                    if '"' in doc:
-                        quote = "'''"
-                    else:
-                        quote = '"""'
-                    s += '\n' + ' ' * (indent+4) + quote + doc[:50]
-                    if len(doc) > 50:
-                        s += '...'
-                    s += quote
-                out.write(s+'\n')
+                    out.write('(%s)' % ', '.join(args))
+                out.write(':\n')
+                doc = info.get('docstring', '')
+                quote = '"""'
+                lead = indent + tab
+                if typ == 'module':
+                    lead = lead[:-len(tab)]
+                out.write(lead + quote + '\n')
+                for line in doc.splitlines():
+                    out.write(lead + line.strip() + '\n')
+                out.write(lead + quote + '\n')
+                out.write('\n')
+                if typ != 'module':
+                    level += 1
                 for child in children:
-                    visit(child, indent+4)
+                    visit(child, level)
         visit(self.iterparse(module_or_filename))
 
 
