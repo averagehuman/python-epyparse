@@ -14,7 +14,7 @@ prettyprint
 
 Pretty print a module's API to stdout::
 
-    $ epyparse print <module_or_filename> [options]
+    $ epyparse print -path <module_or_filename> [options]
 
 which can be shortened to::
 
@@ -27,7 +27,7 @@ serialize
 Serialize each API object in a module to a JSON-serialized dictionary
 and save to the filesystem::
 
-    $ epyparse serialize <module_or_filename> [options]
+    $ epyparse serialize -path <module_or_filename> [options]
 
 
 Programmatic Usage

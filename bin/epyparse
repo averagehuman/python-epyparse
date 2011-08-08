@@ -4,6 +4,8 @@ epyparse - python API info
 
 """
 
+import os, sys
+
 def usage_command(help=False):
     if help:
         help_command()
@@ -13,22 +15,40 @@ def usage_command(help=False):
 def help_command():
     sys.stdout.write(__doc__)
 
-def print_command(path=None):
-    assert path is not None
-    if urlparse(path).netloc.startswith('https'):
-        from urllib import urlopen
-    else:
-        epyparse.pprint(path)
+def print_command(path=None, nocolor=False):
+    from urlparse import urlparse
+    try:
+        if urlparse(path).netloc.startswith('http'):
+            from urllib import urlopen
+        else:
+            epyparse.pprint(path)
+    except Exception, e:
+        sys.exit("ERROR: %s" % e)
 
-functions = dict((k,v) for (k, v) in locals().items() if k[0] != '_')
-commands = set(k[:-len('_command')] for k in functions if k.endswith('_command'))
+def serialize_command(path=None, out=os.getcwd()):
+    import json
+    assert_strings(dict(path=path, out=out))
+    if not os.path.exists(out):
+        os.makedirs(out)
+    try:
+        for item in epyparse.flattened(path):
+            with open(out.rstrip('/') + '/' + item['fullname'], 'w+b') as fp:
+                json.dump(item, fp)
+    except Exception, e:
+        sys.exit("ERROR: %s" % e)
+
+cmd = '_command'
+functions = dict((k,v) for (k, v) in locals().items() if k.endswith(cmd))
+commands = set(k[:-len(cmd)] for k in functions)
 dispatch = type('__main__', (object,), functions)
 
-if __name__ == '__main__':
-    import os, sys
-    import json
-    from urlparse import urlparse
+def assert_strings(d):
+    for k, v in d.items():
+        if not isinstance(v, basestring):
+            sys.exit("ERROR: missing value for option '%s'" % k)
+            return
 
+if __name__ == '__main__':
     from modargs import args
 
     import epyparse

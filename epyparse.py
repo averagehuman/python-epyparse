@@ -38,7 +38,7 @@ def notnull(val):
     return not any(operator.is_(val, obj) for obj in NULLS)
 
 def valid_dotted_name(name):
-    """validate that 'name' is a possible module name"""
+    """validate that 'name' is a syntactically valid module name"""
     return bool(RX_DOTTED_NAME.match(name))
 
 def sort_key(parent_type, reverse):
@@ -94,9 +94,15 @@ def objectify(json_file):
     return Object.from_json(json_file)
 
 class Object(dict):
+    """
+    A dict subclass representing any API object.
+    """
 
     @classmethod
     def from_json(cls, path):
+        """
+        Rehydrate a serialized Object.
+        """
         with open(path) as fp:
             obj = cls(json.load(fp))
         obj['src'] = path
@@ -104,6 +110,7 @@ class Object(dict):
 
     @property
     def name(self):
+        """Shorthand for the last item in the dotted string"""
         return self.__getitem__('fullname').rpartition('.')[2]
 
     def get_parent(self):
@@ -196,8 +203,8 @@ class Parser(object):
         Recursively iterate through APIDoc objects produced by epydoc.
 
         We use a pair of try/except clauses to force any given object to
-        be skipped if it doesn't quack as we would like - ie. if it has a
-        valid canonical_name and a variables attribute. This works for
+        be skipped if it doesn't quack as we would like - ie. if it doesn't
+        have valid 'canonical_name' and 'variables' attributes. This works for
         the moment because we are only interested in modules, classes and
         functions, but a more thorough interrogation of the object will
         be required if we want to handle imports and class attributes etc.
@@ -229,6 +236,7 @@ class Parser(object):
         yield info, children
 
     def parse(self, module_or_filename):
+        """Create a dictionary from the `iterparse` results"""
         def visit(iterable):
             d = {}
             for info, children in iterable:
@@ -244,6 +252,7 @@ class Parser(object):
         return visit(self.iterparse(module_or_filename))
 
     def flatten(self, module_or_filename):
+        """Convert the recursive `iterparse` results to a flat iterable"""
         def visit(iterable):
             for info, children in iterable:
                 members = []
@@ -257,6 +266,7 @@ class Parser(object):
         return visit(self.iterparse(module_or_filename))
 
     def pprint(self, module_or_filename, out, reverse=False):
+        """Pretty print the `iterparse` results."""
         tab = ' ' * 4
         quote = '"""'
         def visit(iterable, level=0):
@@ -297,8 +307,4 @@ class Parser(object):
                     visit(child, level)
         visit(self.iterparse(module_or_filename, reverse=reverse))
 
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
 
