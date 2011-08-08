@@ -2,7 +2,7 @@
 epyparse.py
 """
 
-__version__ = '0.0.1'
+__version__ = '0.1.1'
 
 import os
 import sys
@@ -192,10 +192,11 @@ class Parser(object):
 
     def iterparse(self, apidoc, parent_type=None, reverse=False):
         """
-        Recursively iterate through the APIDoc object produced by epydoc.
+        Recursively iterate through APIDoc objects produced by epydoc.
 
         We use a pair of try/except clauses to force any given object to
-        be skipped if it doesn't quack as we would like - this works for
+        be skipped if it doesn't quack as we would like - ie. if it has a
+        valid canonical_name and a variables attribute. This works for
         the moment because we are only interested in modules, classes and
         functions, but a more thorough interrogation of the object will
         be required if we want to handle imports and class attributes etc.
