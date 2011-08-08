@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+import doctest
+import unittest
+
+suite = unittest.TestSuite()
+suite.addTest(doctest.DocFileSuite('README'))
+unittest.TextTestRunner(verbosity=2).run(suite)
+
