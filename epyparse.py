@@ -18,6 +18,7 @@ from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
 
 NULLS = set([None, UNKNOWN])
+
 MODULE_ORDER = [
     ModuleDoc,
     UNKNOWN,
@@ -33,7 +34,7 @@ CLASS_ORDER = [
 RX_DOTTED_NAME = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
 
 def notnull(val):
-    """Return True if val is neither None or UNKNOWN"""
+    """Return True if val is neither None nor UNKNOWN"""
     return not any(operator.is_(val, obj) for obj in NULLS)
 
 def valid_dotted_name(name):
