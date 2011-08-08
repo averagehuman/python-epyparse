@@ -1,198 +1,5 @@
 """
-
-Parse bad file name::
-
-    >>> parsed('does/not/exist')
-    Traceback (most recent call last):
-        ...
-    IOError: No such file does/not/exist
-
-Parse bad module name::
-
-    >>> parsed('does.not.exist')
-    Traceback (most recent call last):
-        ...
-    ImportError: No Python source file found.
-
-Parse module::
-
-    >>> d = parsed('epydoc.apidoc')
-    >>> sorted(d.keys())
-    ['children', 'docstring', 'fullname', 'type']
-    >>> d['type']
-    'module'
-    >>> for item in sorted(d['children'], key=lambda d: (d['type'], d['fullname'])):
-    ...     print item['type'], ' -> ', item['fullname']
-    class  ->  epydoc.apidoc.APIDoc
-    class  ->  epydoc.apidoc.ClassDoc
-    class  ->  epydoc.apidoc.ClassMethodDoc
-    class  ->  epydoc.apidoc.DocIndex
-    class  ->  epydoc.apidoc.DottedName
-    class  ->  epydoc.apidoc.GenericValueDoc
-    class  ->  epydoc.apidoc.ModuleDoc
-    class  ->  epydoc.apidoc.NamespaceDoc
-    class  ->  epydoc.apidoc.PropertyDoc
-    class  ->  epydoc.apidoc.RoutineDoc
-    class  ->  epydoc.apidoc.StaticMethodDoc
-    class  ->  epydoc.apidoc.ValueDoc
-    class  ->  epydoc.apidoc.VariableDoc
-    function  ->  epydoc.apidoc.pp_apidoc
-    function  ->  epydoc.apidoc.reachable_valdocs
-
-Flatten and JSON-serialize. For the `Object.get_parent` and `Object.get_children`
-deserialization methods to work, we rely on the convention that api objects have
-been saved to the same directory with the canonical name as file name and with no
-file extension::
-
-    >>> assert not pathexists('TESTOUT')
-    >>> os.mkdir('TESTOUT')
-    >>> for item in flattened('epydoc.apidoc'):
-    ...     print item['fullname']
-    ...     with open('TESTOUT/' + item['fullname'], 'w+b') as fp:
-    ...         json.dump(item, fp)
-    ...
-    epydoc.apidoc.pp_apidoc
-    epydoc.apidoc.reachable_valdocs
-    epydoc.apidoc.APIDoc.__cmp__
-    epydoc.apidoc.APIDoc.__hash__
-    epydoc.apidoc.APIDoc.__init__
-    epydoc.apidoc.APIDoc.__repr__
-    epydoc.apidoc.APIDoc.apidoc_links
-    epydoc.apidoc.APIDoc.is_detailed
-    epydoc.apidoc.APIDoc.merge_and_overwrite
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.specialize_to
-    epydoc.apidoc.APIDoc
-    epydoc.apidoc.ClassDoc.apidoc_links
-    epydoc.apidoc.ClassDoc.is_exception
-    epydoc.apidoc.ClassDoc.is_newstyle_class
-    epydoc.apidoc.ClassDoc.is_type
-    epydoc.apidoc.ClassDoc.mro
-    epydoc.apidoc.ClassDoc.select_variables
-    epydoc.apidoc.ClassDoc
-    epydoc.apidoc.ClassMethodDoc
-    epydoc.apidoc.DocIndex.__init__
-    epydoc.apidoc.DocIndex.container
-    epydoc.apidoc.DocIndex.find
-    epydoc.apidoc.DocIndex.get_valdoc
-    epydoc.apidoc.DocIndex.get_vardoc
-    epydoc.apidoc.DocIndex.reachable_valdocs
-    epydoc.apidoc.DocIndex.read_profiling_info
-    epydoc.apidoc.DocIndex
-    epydoc.apidoc.DottedName.InvalidDottedName
-    epydoc.apidoc.DottedName.__add__
-    epydoc.apidoc.DottedName.__cmp__
-    epydoc.apidoc.DottedName.__getitem__
-    epydoc.apidoc.DottedName.__hash__
-    epydoc.apidoc.DottedName.__init__
-    epydoc.apidoc.DottedName.__len__
-    epydoc.apidoc.DottedName.__radd__
-    epydoc.apidoc.DottedName.__repr__
-    epydoc.apidoc.DottedName.__str__
-    epydoc.apidoc.DottedName.container
-    epydoc.apidoc.DottedName.contextualize
-    epydoc.apidoc.DottedName.dominates
-    epydoc.apidoc.DottedName
-    epydoc.apidoc.GenericValueDoc.is_detailed
-    epydoc.apidoc.GenericValueDoc
-    epydoc.apidoc.ModuleDoc.apidoc_links
-    epydoc.apidoc.ModuleDoc.init_submodule_groups
-    epydoc.apidoc.ModuleDoc.select_variables
-    epydoc.apidoc.ModuleDoc
-    epydoc.apidoc.NamespaceDoc.__init__
-    epydoc.apidoc.NamespaceDoc.apidoc_links
-    epydoc.apidoc.NamespaceDoc.group_names
-    epydoc.apidoc.NamespaceDoc.init_sorted_variables
-    epydoc.apidoc.NamespaceDoc.init_variable_groups
-    epydoc.apidoc.NamespaceDoc.is_detailed
-    epydoc.apidoc.NamespaceDoc.report_unused_groups
-    epydoc.apidoc.NamespaceDoc
-    epydoc.apidoc.PropertyDoc.apidoc_links
-    epydoc.apidoc.PropertyDoc.is_detailed
-    epydoc.apidoc.PropertyDoc
-    epydoc.apidoc.RoutineDoc.all_args
-    epydoc.apidoc.RoutineDoc.is_detailed
-    epydoc.apidoc.RoutineDoc
-    epydoc.apidoc.StaticMethodDoc
-    epydoc.apidoc.ValueDoc.__getstate__
-    epydoc.apidoc.ValueDoc.__repr__
-    epydoc.apidoc.ValueDoc.__setstate__
-    epydoc.apidoc.ValueDoc.apidoc_links
-    epydoc.apidoc.ValueDoc.pyval_repr
-    epydoc.apidoc.ValueDoc.summary_pyval_repr
-    epydoc.apidoc.ValueDoc
-    epydoc.apidoc.VariableDoc.__init__
-    epydoc.apidoc.VariableDoc.__repr__
-    epydoc.apidoc.VariableDoc.apidoc_links
-    epydoc.apidoc.VariableDoc.is_detailed
-    epydoc.apidoc.VariableDoc
-    epydoc.apidoc
-
-Deserialize to `Object`::
-
-    >>> obj = objectify('TESTOUT/epydoc.apidoc.APIDoc.merge_and_overwrite')
-    >>> sorted(obj.keys())
-    [u'args', u'docstring', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
-    >>> obj.args
-    [u'self', u'other']
-    >>> obj.is_method
-    True
-    >>> obj.lineno * 0
-    0
-    >>> obj.params
-    [[u'ignore_hash_conflict', u'False']]
-    >>> obj.name
-    u'merge_and_overwrite'
-
-Because we have serialized the object parent to the same directory, we can
-retrieve it as well::
-
-    >>> parent = obj.get_parent()
-    >>> parent.fullname
-    u'epydoc.apidoc.APIDoc'
-    >>> parent.type
-    u'class'
-    >>> parent.name
-    u'APIDoc'
-    >>> for name in sorted(parent.members):
-    ...     print name
-    epydoc.apidoc.APIDoc.__cmp__
-    epydoc.apidoc.APIDoc.__hash__
-    epydoc.apidoc.APIDoc.__init__
-    epydoc.apidoc.APIDoc.__repr__
-    epydoc.apidoc.APIDoc.apidoc_links
-    epydoc.apidoc.APIDoc.is_detailed
-    epydoc.apidoc.APIDoc.merge_and_overwrite
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.specialize_to
-
-This function object has no children::
-
-    >>> obj.get_children()
-    []
-
-but its parent does::
-
-    >>> for child in sorted(parent.get_children(), key=lambda d: d['fullname']):
-    ...     print child.type, ' -> ', child.name
-    function  ->  __cmp__
-    function  ->  __hash__
-    function  ->  __init__
-    function  ->  __repr__
-    function  ->  apidoc_links
-    function  ->  is_detailed
-    function  ->  merge_and_overwrite
-    function  ->  pp
-    function  ->  pp
-    function  ->  specialize_to
-
-Tidy up::
-
-    >>> import shutil
-    >>> shutil.rmtree('TESTOUT')
-
+epyparse.py
 """
 
 __version__ = '0.0.1'
@@ -205,6 +12,7 @@ import operator
 import re
 import json
 import textwrap
+from inspect import cleandoc
 
 from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
@@ -225,15 +33,26 @@ CLASS_ORDER = [
 RX_DOTTED_NAME = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
 
 def notnull(val):
+    """Return True if val is neither None or UNKNOWN"""
     return not any(operator.is_(val, obj) for obj in NULLS)
 
 def valid_dotted_name(name):
+    """validate that 'name' is a possible module name"""
     return bool(RX_DOTTED_NAME.match(name))
 
-def sort_key(parent_type):
+def sort_key(parent_type, reverse):
+    """
+    Sort a `APIDoc.variables` dictionary - by default, 'functions then classes'
+    for modules and 'inner classes then methods' for classes. You can have the
+    order of module members be 'classes then functions' by setting reverse to
+    True, but this doesn't affect the order of a class's members, which will
+    always be the default. Objects of the same type will be ordered alphabetically.
+    """
     ordering = MODULE_ORDER
     if parent_type is ClassDoc:
         ordering = CLASS_ORDER
+    elif reverse:
+        ordering = list(reversed(ordering))
     def object_order(var):
         try:
             return ordering.index(type(var.value)), str(var.value.canonical_name)
@@ -258,9 +77,12 @@ def flattened(module_or_filename):
     """
     return list(Parser().flatten(module_or_filename))
 
-def pprint(module_or_filename, out=sys.stdout):
+def pprint(module_or_filename, out=sys.stdout, reverse=False):
     """
     Pretty print the contents of a Python module or file
+
+    Module contents are printed 'functions first, then classes', unless reverse
+    is True, in which case classes are printed first.
     """
     Parser().pprint(module_or_filename, out)
 
@@ -368,7 +190,16 @@ class Parser(object):
                 return parse_docs(name=module_or_filename)
         raise IOError("No such file %s" % module_or_filename)
 
-    def iterparse(self, apidoc, parent_type=None):
+    def iterparse(self, apidoc, parent_type=None, reverse=False):
+        """
+        Recursively iterate through the APIDoc object produced by epydoc.
+
+        We use a pair of try/except clauses to force any given object to
+        be skipped if it doesn't quack as we would like - this works for
+        the moment because we are only interested in modules, classes and
+        functions, but a more thorough interrogation of the object will
+        be required if we want to handle imports and class attributes etc.
+        """
         if isinstance(apidoc, basestring):
             apidoc = self.get_module_api_doc(apidoc)
         skip = False
@@ -391,8 +222,8 @@ class Parser(object):
         except:
             children = ()
         else:
-            vals = sorted(vals, key=sort_key(apitype))
-            children = (self.iterparse(val.value, parent_type=apitype) for val in vals)
+            vals = sorted(vals, key=sort_key(apitype, reverse))
+            children = (self.iterparse(val.value, parent_type=apitype, reverse=reverse) for val in vals)
         yield info, children
 
     def parse(self, module_or_filename):
@@ -423,8 +254,9 @@ class Parser(object):
                 yield info
         return visit(self.iterparse(module_or_filename))
 
-    def pprint(self, module_or_filename, out):
+    def pprint(self, module_or_filename, out, reverse=False):
         tab = ' ' * 4
+        quote = '"""'
         def visit(iterable, level=0):
             indent = level * tab
             for info, children in iterable:
@@ -449,20 +281,19 @@ class Parser(object):
                     out.write('(%s)' % ', '.join(args))
                 out.write(':\n')
                 doc = info.get('docstring', '')
-                quote = '"""'
                 lead = indent + tab
                 if typ == 'module':
                     lead = lead[:-len(tab)]
                 out.write(lead + quote + '\n')
-                for line in doc.splitlines():
-                    out.write(lead + line.strip() + '\n')
+                for line in cleandoc(doc).splitlines():
+                    out.write(lead + line + '\n')
                 out.write(lead + quote + '\n')
                 out.write('\n')
                 if typ != 'module':
                     level += 1
                 for child in children:
                     visit(child, level)
-        visit(self.iterparse(module_or_filename))
+        visit(self.iterparse(module_or_filename, reverse=reverse))
 
 
 if __name__ == '__main__':
