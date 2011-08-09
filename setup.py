@@ -9,7 +9,7 @@ sys.path.insert(0, srcdir)
 import epyparse
 readme = open("README").read()
 changes = open("docs/changes.rst").read()
-long_description = readme + "\n" + changes
+long_description = readme + "\n\n" + changes
 requires = [
     'epydoc',
     'modargs',

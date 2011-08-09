@@ -12,7 +12,7 @@ Command line Usage
 prettyprint
 ~~~~~~~~~~~
 
-Pretty print an API representation of a named object or file::
+Pretty print a representation of the API of a named object or file::
 
     $ epyparse print -path <name_or_path> [options]
 
@@ -26,8 +26,9 @@ the `-nocolor` option.
 serialize
 ~~~~~~~~~
 
-Recursively serialize each API object and its members to JSON dictionaries
-and save each individual dictionary in its own file::
+Flatten the recursive API structure of a named object or file to a sequence
+of individual dictionaries. Each dictionary is JSON-serialized and saved to
+its own file::
 
     $ epyparse serialize -path <name_or_path> [options]
 
@@ -43,28 +44,46 @@ Top-level functions are `parsed`, `flattened`, `pprint` and `objectify`::
 
     >>> from epyparse import parsed, flattened, pprint, objectify
 
-Input must be an existing file::
+Input can be a file path::
+
+    >>> pprint('setup.py')
+    module setup:
+    """
+    """
+    <BLANKLINE>
+
+which must exist::
 
     >>> parsed('does/not/exist')
     Traceback (most recent call last):
         ...
     IOError: No such file does/not/exist
 
-or an accessible object::
+Or a named object::
 
-    >>> parsed('does.not.exist')
+    >>> pprint('os.getenv')
+    def getenv(key, default=None):
+        """
+        Get an environment variable, return None if it doesn't exist.
+        The optional second argument can specify an alternate default.
+        """
+    <BLANKLINE>
+
+which must be accessible::
+
+    >>> pprint('does.not.exist')
     Traceback (most recent call last):
         ...
     ImportError: No Python source file found.
 
-but not a builtin or c-based object::
+and not a builtin or c-based object::
 
-    >>> parsed('cStringIO.StringIO')
+    >>> pprint('cStringIO.StringIO')
     Traceback (most recent call last):
         ...
     ImportError: No Python source file for builtin modules.
 
-Modules, functions, classes or methods::
+Modules, functions, classes or methods can be accessed::
 
     >>> pprint('StringIO.StringIO.write')
     def write(self, s):
@@ -205,8 +224,14 @@ Deserialize to `Object`
 
     >>> from epyparse import objectify
     >>> obj = objectify('TESTOUT/epydoc.apidoc.APIDoc.merge_and_overwrite')
+
+The returned `Object` type is a dict subclass::
+
     >>> sorted(obj.keys())
     [u'args', u'docstring', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
+
+with attribute-style access::
+
     >>> obj.args
     [u'self', u'other']
     >>> obj.is_method
@@ -218,8 +243,13 @@ Deserialize to `Object`
     >>> obj.name
     u'merge_and_overwrite'
 
-Because we have serialized the object parent to the same directory, we can
-retrieve it as well::
+`Object.parent` gives the name of the parent object, if any::
+
+    >>> obj.parent
+    u'epydoc.apidoc.APIDoc'
+
+And, because we have serialized the parent to the same directory, we can
+retrieve it with the `Object.get_parent` method::
 
     >>> parent = obj.get_parent()
     >>> parent.fullname
@@ -228,8 +258,11 @@ retrieve it as well::
     u'class'
     >>> parent.name
     u'APIDoc'
+
+Similarly, `Object.members` returns the names of the object's members, if any::
+
     >>> for name in sorted(parent.members):
-    ...     print name
+    ...     print parent.fullname + '.' + name
     epydoc.apidoc.APIDoc.__cmp__
     epydoc.apidoc.APIDoc.__hash__
     epydoc.apidoc.APIDoc.__init__
@@ -241,14 +274,9 @@ retrieve it as well::
     epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
 
-This function object has no children::
+and `Object.get_members` deserializes each member::
 
-    >>> obj.get_children()
-    []
-
-but its parent does::
-
-    >>> for child in sorted(parent.get_children(), key=lambda d: d['fullname']):
+    >>> for child in sorted(parent.get_members(), key=lambda d: d['fullname']):
     ...     print child.type, ' -> ', child.name
     function  ->  __cmp__
     function  ->  __hash__

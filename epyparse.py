@@ -11,7 +11,6 @@ from os.path import exists as pathexists, join as pathjoin, dirname, basename, a
 import operator
 import re
 import json
-import textwrap
 from inspect import cleandoc
 
 from epydoc.docparser import parse_docs
@@ -31,6 +30,7 @@ CLASS_ORDER = [
     ClassDoc,
     RoutineDoc,
 ]
+
 RX_DOTTED_NAME = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
 
 def notnull(val):
@@ -48,6 +48,9 @@ def sort_key(parent_type, reverse):
     order of module members be 'classes then functions' by setting reverse to
     True, but this doesn't affect the order of a class's members, which will
     always be the default. Objects of the same type will be ordered alphabetically.
+
+    This is a factory function which returns the appropriate key function for
+    the parent_type.
     """
     ordering = MODULE_ORDER
     if parent_type is ClassDoc:
@@ -113,21 +116,30 @@ class Object(dict):
         """Shorthand for the last item in the dotted string"""
         return self.__getitem__('fullname').rpartition('.')[2]
 
+    @property
+    def parent(self):
+        """The name of the object's containing object"""
+        return self.__getitem__('fullname').rpartition('.')[0]
+
+    @property
+    def members(self):
+        return self.get('members', [])
+
     def get_parent(self):
         src = self.get('src', None)
         if src is not None:
-            parent = self['fullname'].rpartition('.')[0]
+            parent = self.parent
             if parent:
                 fname = '%s/%s' % (dirname(src), parent)
                 return self.from_json(fname)
         return None
 
-    def get_children(self):
+    def get_members(self):
         members = self.get('members')
         if not members:
             return []
-        root = dirname(self['src'])
-        return [self.from_json(root + '/' + m) for m in members]
+        root = '%s/%s' % (dirname(self['src']), self.__getitem__('fullname'))
+        return [self.from_json(root + '.' + m) for m in members]
 
 Object.__getattr__ = dict.__getitem__
 Object.__setattr__ = dict.__setitem__
@@ -142,6 +154,7 @@ class Parser(object):
     )
 
     def _update_function(self, info, apidoc):
+        """update a function object's api info"""
         for attr in self.func_arg_items:
             val = getattr(apidoc, attr, None)
             if notnull(val):
@@ -223,7 +236,7 @@ class Parser(object):
             fullname=str(apidoc.canonical_name).lstrip('.'),
         )
         if notnull(apidoc.docstring):
-            info['docstring'] = apidoc.docstring
+            info['docstring'] = cleandoc(apidoc.docstring)
         apitype = type(apidoc)
         self._update(info, apidoc, apitype, parent_type)
         try:
@@ -258,7 +271,7 @@ class Parser(object):
                 members = []
                 for child in children:
                     for item in visit(child):
-                        members.append(item['fullname'])
+                        members.append(item['fullname'].rpartition('.')[2])
                         yield item
                 if members:
                     info['members'] = members
@@ -297,7 +310,7 @@ class Parser(object):
                 if typ == 'module':
                     lead = lead[:-len(tab)]
                 out.write(lead + quote + '\n')
-                for line in cleandoc(doc).splitlines():
+                for line in doc.splitlines():
                     out.write(lead + line + '\n')
                 out.write(lead + quote + '\n')
                 out.write('\n')
