@@ -102,7 +102,7 @@ Parse module::
 
     >>> d = parsed('epydoc.apidoc')
     >>> sorted(d.keys())
-    ['children', 'docstring', 'fullname', 'type']
+    ['__doc__', 'children', 'fullname', 'type']
     >>> d['type']
     'module'
     >>> for item in sorted(d['children'], key=lambda d: (d['type'], d['fullname'])):
@@ -228,7 +228,7 @@ Deserialize to `Object`
 The returned `Object` type is a dict subclass::
 
     >>> sorted(obj.keys())
-    [u'args', u'docstring', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
+    [u'__doc__', u'args', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
 
 with attribute-style access::
 
@@ -289,6 +289,24 @@ and `Object.get_members` deserializes each member::
     function  ->  pp
     function  ->  specialize_to
 
+Introspection
+-------------
+
+    >>> import inspect
+    >>> from epydoc.apidoc import APIDoc
+    >>> from epyparse import Inspector
+
+Argspec with inspect vs. with Inspector::
+
+    >>> inspect.getargspec(APIDoc.merge_and_overwrite)
+    ArgSpec(args=['self', 'other', 'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(False,))
+    >>> Inspector.getargspec(obj)
+    ArgSpec(args=[u'self', u'other', u'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(u'False',))
+
+    >>> inspect.getargspec(APIDoc.apidoc_links)
+    ArgSpec(args=['self'], varargs=None, keywords='filters', defaults=None)
+    >>> Inspector.getargspec(parent.get_member('apidoc_links'))
+    ArgSpec(args=[u'self'], varargs=None, keywords=u'filters', defaults=None)
 
 Tidy up::
 

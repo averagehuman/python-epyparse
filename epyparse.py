@@ -2,16 +2,17 @@
 epyparse.py
 """
 
-__version__ = '0.1.1'
+__version__ = '0.2.1'
 
 import os
 import sys
+import types
 from os.path import dirname, basename, abspath, splitext
 from os.path import exists as pathexists, join as pathjoin, dirname, basename, abspath
 import operator
 import re
 import json
-from inspect import cleandoc
+import inspect
 
 from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
@@ -134,12 +135,15 @@ class Object(dict):
                 return self.from_json(fname)
         return None
 
+    def get_member(self, key, default=None):
+        src = '%s/%s.%s' % (dirname(self['src']), self['fullname'], key)
+        try:
+            return self.from_json(src)
+        except IOError:
+            return default
+
     def get_members(self):
-        members = self.get('members')
-        if not members:
-            return []
-        root = '%s/%s' % (dirname(self['src']), self.__getitem__('fullname'))
-        return [self.from_json(root + '.' + m) for m in members]
+        return [self.get_member(m) for m in self.get('members', ())]
 
 Object.__getattr__ = dict.__getitem__
 Object.__setattr__ = dict.__setitem__
@@ -236,7 +240,7 @@ class Parser(object):
             fullname=str(apidoc.canonical_name).lstrip('.'),
         )
         if notnull(apidoc.docstring):
-            info['docstring'] = cleandoc(apidoc.docstring)
+            info['__doc__'] = inspect.cleandoc(apidoc.docstring)
         apitype = type(apidoc)
         self._update(info, apidoc, apitype, parent_type)
         try:
@@ -305,7 +309,7 @@ class Parser(object):
                         args.append('**' + opt)
                     out.write('(%s)' % ', '.join(args))
                 out.write(':\n')
-                doc = info.get('docstring', '')
+                doc = info.get('__doc__', '')
                 lead = indent + tab
                 if typ == 'module':
                     lead = lead[:-len(tab)]
@@ -320,4 +324,58 @@ class Parser(object):
                     visit(child, level)
         visit(self.iterparse(name_or_path, reverse=reverse))
 
+class Inspector(object):
+
+    @staticmethod
+    def ismodule(obj):
+        return obj.get('type') == 'module'
+
+    @staticmethod
+    def isclass(obj):
+        return obj.get('type') == 'class'
+
+    @staticmethod
+    def isfunction(obj):
+        return obj.get('type') == 'function'
+
+    @staticmethod
+    def ismethod(obj):
+        return obj.get('type') == 'function' and obj.get('is_method')
+
+    @staticmethod
+    def isroutine(object):
+        return obj.get('type') == 'function'
+
+    @staticmethod
+    def getargspec(obj):
+        params = obj.get('params')
+        if params:
+            defaults = tuple(t[1] for t in params)
+        else:
+            defaults = None
+        args = obj.get('args')
+        if args and params:
+            args += [t[0] for t in params]
+        return inspect.ArgSpec(args, obj.get('vararg'), obj.get('kwarg'), defaults)
+
+    @staticmethod
+    def getmembers(obj, predicate=None):
+        if predicate:
+            return [m for m in obj.get_members() if predicate(m)]
+        return obj.get_members()
+
+    @staticmethod
+    def getdoc(obj):
+        """Get the documentation string for an object.
+
+        All tabs are expanded to spaces.  To clean up docstrings that are
+        indented to line up with blocks of code, any whitespace than can be
+        uniformly removed from the second line onwards is removed."""
+        try:
+            doc = object['__doc__']
+        except KeyError:
+            return None
+        if not isinstance(doc, types.StringTypes):
+            return None
+        return doc
 
