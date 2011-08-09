@@ -15,13 +15,20 @@ def usage_command(help=False):
 def help_command():
     sys.stdout.write(__doc__)
 
-def print_command(path=None, nocolor=False):
-    from urlparse import urlparse
+def print_command(path=None, nocolor=False, bg='dark'):
     try:
-        if urlparse(path).netloc.startswith('http'):
-            from urllib import urlopen
-        else:
+        if nocolor:
             epyparse.pprint(path)
+            return
+        else:
+            from cStringIO import StringIO
+            out = StringIO()
+            epyparse.pprint(path, out=out)
+            text = out.getvalue()
+            sys.stdout.write('\n')
+            for line in colorize(text, bg=bg).splitlines():
+                sys.stdout.write(line+'\n')
+            sys.stdout.write('\n')
     except Exception, e:
         sys.exit("ERROR: %s" % e)
 
@@ -47,6 +54,22 @@ def assert_strings(d):
         if not isinstance(v, basestring):
             sys.exit("ERROR: missing value for option '%s'" % k)
             return
+
+try:
+    from pygments import highlight
+    from pygments.lexers import PythonLexer
+    from pygments.formatters.terminal import TerminalFormatter
+
+    def colorize(text, bg):
+        try:
+            return highlight(text, PythonLexer(), TerminalFormatter(bg=bg))
+        except:
+            return text
+
+except ImportError:
+    
+    def colorize(text, bg):
+        return text
 
 if __name__ == '__main__':
     from modargs import args
