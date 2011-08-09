@@ -12,33 +12,36 @@ Command line Usage
 prettyprint
 ~~~~~~~~~~~
 
-Pretty print a module's API to stdout::
+Pretty print an API representation of a named object or file::
 
-    $ epyparse print -path <module_or_filename> [options]
+    $ epyparse print -path <name_or_path> [options]
 
 which can be shortened to::
 
-    $ epyparse <module_or_filename> [options]
+    $ epyparse <name_or_path> [options]
 
+By default, output is colored for the terminal, you can turn this off with
+the `-nocolor` option.
 
 serialize
 ~~~~~~~~~
 
-Serialize each API object in a module to a JSON-serialized dictionary
-and save to the filesystem::
+Recursively serialize each API object and its members to JSON dictionaries
+and save each individual dictionary in its own file::
 
-    $ epyparse serialize -path <module_or_filename> [options]
+    $ epyparse serialize -path <name_or_path> [options]
 
+By default, files are written to the current working directory, you can
+specify another directory with the `-out` option::
+
+    $ epyparse serialize -path <name_or_path> -out docs/api
 
 Programmatic Usage
 ------------------
 
-Top-level functions `parsed`, `flattened`, `pprint` and `objectify`::
+Top-level functions are `parsed`, `flattened`, `pprint` and `objectify`::
 
     >>> from epyparse import parsed, flattened, pprint, objectify
-
-Parse to a nested dictionary
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Input must be an existing file::
 
@@ -47,12 +50,34 @@ Input must be an existing file::
         ...
     IOError: No such file does/not/exist
 
-or module::
+or an accessible object::
 
     >>> parsed('does.not.exist')
     Traceback (most recent call last):
         ...
     ImportError: No Python source file found.
+
+but not a builtin or c-based object::
+
+    >>> parsed('cStringIO.StringIO')
+    Traceback (most recent call last):
+        ...
+    ImportError: No Python source file for builtin modules.
+
+Modules, functions, classes or methods::
+
+    >>> pprint('StringIO.StringIO.write')
+    def write(self, s):
+        """
+        Write a string to the file.
+    <BLANKLINE>
+        There is no return value.
+        """
+    <BLANKLINE>
+
+
+Parse to a nested dictionary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Parse module::
 
@@ -81,6 +106,7 @@ Parse module::
 
 Flatten and JSON-serialize
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 For the `Object.get_parent` and `Object.get_children` deserialization
 methods to work, we rely on the convention that api objects have been
 saved to the same directory with the canonical name as file name and
@@ -234,6 +260,7 @@ but its parent does::
     function  ->  pp
     function  ->  pp
     function  ->  specialize_to
+
 
 Tidy up::
 

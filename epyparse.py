@@ -38,7 +38,7 @@ def notnull(val):
     return not any(operator.is_(val, obj) for obj in NULLS)
 
 def valid_dotted_name(name):
-    """validate that 'name' is a syntactically valid module name"""
+    """validate that 'name' is a syntactically valid python name"""
     return bool(RX_DOTTED_NAME.match(name))
 
 def sort_key(parent_type, reverse):
@@ -66,26 +66,26 @@ __all__ = [
     'parsed', 'flattened', 'pprint', 'objectify',
 ]
 
-def parsed(module_or_filename):
+def parsed(name_or_path):
     """
-    Parse a Python module or file, return a nested dictionary of API objects
+    Parse a Python object or file, return a nested dictionary of API objects
     """
-    return Parser().parse(module_or_filename)
+    return Parser().parse(name_or_path)
 
-def flattened(module_or_filename):
+def flattened(name_or_path):
     """
-    Parse a Python module or file, return a list of dictionaries of API objects
+    Parse a Python object or file, return a list of dictionaries of API objects
     """
-    return list(Parser().flatten(module_or_filename))
+    return list(Parser().flatten(name_or_path))
 
-def pprint(module_or_filename, out=sys.stdout, reverse=False):
+def pprint(name_or_path, out=sys.stdout, reverse=False):
     """
-    Pretty print the contents of a Python module or file
+    Pretty print the contents of a Python object or file
 
     Module contents are printed 'functions first, then classes', unless reverse
     is True, in which case classes are printed first.
     """
-    Parser().pprint(module_or_filename, out)
+    Parser().pprint(name_or_path, out)
 
 def objectify(json_file):
     """
@@ -189,18 +189,18 @@ class Parser(object):
         getattr(self, '_update_' + objtype, lambda i, a: None)(info, apidoc)
 
     @staticmethod
-    def get_module_api_doc(module_or_filename):
-        """returns the epydoc parse-only APIDoc object for the file or module"""
-        if pathexists(module_or_filename):
-            return parse_docs(filename=module_or_filename)
+    def get_object_api_doc(name_or_path):
+        """returns the epydoc parse-only APIDoc object for the python file or object"""
+        if pathexists(name_or_path):
+            return parse_docs(filename=name_or_path)
         else:
-            if valid_dotted_name(module_or_filename):
-                return parse_docs(name=module_or_filename)
-        raise IOError("No such file %s" % module_or_filename)
+            if valid_dotted_name(name_or_path):
+                return parse_docs(name=name_or_path)
+        raise IOError("No such file %s" % name_or_path)
 
     def iterparse(self, apidoc, parent_type=None, reverse=False):
         """
-        Recursively iterate through APIDoc objects produced by epydoc.
+        Recursively iterate through the APIDoc objects produced by epydoc.
 
         We use a pair of try/except clauses to force any given object to
         be skipped if it doesn't quack as we would like - ie. if it doesn't
@@ -210,7 +210,7 @@ class Parser(object):
         be required if we want to handle imports and class attributes etc.
         """
         if isinstance(apidoc, basestring):
-            apidoc = self.get_module_api_doc(apidoc)
+            apidoc = self.get_object_api_doc(apidoc)
         skip = False
         try:
             name = apidoc.canonical_name[-1]
@@ -235,7 +235,7 @@ class Parser(object):
             children = (self.iterparse(val.value, parent_type=apitype, reverse=reverse) for val in vals)
         yield info, children
 
-    def parse(self, module_or_filename):
+    def parse(self, name_or_path):
         """Create a dictionary from the `iterparse` results"""
         def visit(iterable):
             d = {}
@@ -249,9 +249,9 @@ class Parser(object):
                 if members:
                     d['children'] = members
             return d
-        return visit(self.iterparse(module_or_filename))
+        return visit(self.iterparse(name_or_path))
 
-    def flatten(self, module_or_filename):
+    def flatten(self, name_or_path):
         """Convert the recursive `iterparse` results to a flat iterable"""
         def visit(iterable):
             for info, children in iterable:
@@ -263,9 +263,9 @@ class Parser(object):
                 if members:
                     info['members'] = members
                 yield info
-        return visit(self.iterparse(module_or_filename))
+        return visit(self.iterparse(name_or_path))
 
-    def pprint(self, module_or_filename, out, reverse=False):
+    def pprint(self, name_or_path, out, reverse=False):
         """Pretty print the `iterparse` results."""
         tab = ' ' * 4
         quote = '"""'
@@ -305,6 +305,6 @@ class Parser(object):
                     level += 1
                 for child in children:
                     visit(child, level)
-        visit(self.iterparse(module_or_filename, reverse=reverse))
+        visit(self.iterparse(name_or_path, reverse=reverse))
 
 
