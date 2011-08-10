@@ -289,24 +289,47 @@ and `Object.get_members` deserializes each member::
     function  ->  pp
     function  ->  specialize_to
 
-Introspection
--------------
+Introspection - `inspect` vs. `Inspector`
+-----------------------------------------
 
     >>> import inspect
     >>> from epydoc.apidoc import APIDoc
     >>> from epyparse import Inspector
+    >>> merge_and_overwrite_obj = obj
+    >>> APIDoc_obj = parent
 
-Argspec with inspect vs. with Inspector::
+argspec (not identical but good enough for displaying the function signature)::
 
     >>> inspect.getargspec(APIDoc.merge_and_overwrite)
     ArgSpec(args=['self', 'other', 'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(False,))
-    >>> Inspector.getargspec(obj)
+    >>> Inspector.getargspec(merge_and_overwrite_obj)
     ArgSpec(args=[u'self', u'other', u'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(u'False',))
 
     >>> inspect.getargspec(APIDoc.apidoc_links)
     ArgSpec(args=['self'], varargs=None, keywords='filters', defaults=None)
-    >>> Inspector.getargspec(parent.get_member('apidoc_links'))
+    >>> Inspector.getargspec(APIDoc_obj.get_member('apidoc_links'))
     ArgSpec(args=[u'self'], varargs=None, keywords=u'filters', defaults=None)
+
+hasattr::
+
+    >>> hasattr(APIDoc, 'merge_and_overwrite')
+    True
+    >>> Inspector.hasattr(parent, 'merge_and_overwrite')
+    True
+    >>> Inspector.hasattr(parent, 'somethingsomethingorangessomething')
+    False
+
+dir
+---
+
+    >>> dir(merge_and_overwrite_obj)
+    []
+    >>> sorted(dir(APIDoc_obj))[:6]
+    [u'__cmp__', u'__hash__', u'__init__', u'__repr__', u'apidoc_links', u'is_detailed']
+    >>> module_obj = objectify('TESTOUT/epydoc.apidoc')
+    >>> sorted(dir(module_obj))[:6]
+    [u'APIDoc', u'ClassDoc', u'ClassMethodDoc', u'DocIndex', u'DottedName', u'GenericValueDoc']
+
 
 Tidy up::
 

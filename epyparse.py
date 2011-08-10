@@ -13,6 +13,7 @@ import operator
 import re
 import json
 import inspect
+from itertools import ifilter
 
 from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
@@ -119,14 +120,16 @@ class Object(dict):
 
     @property
     def parent(self):
-        """The name of the object's containing object"""
+        """Return the name of the object's containing object"""
         return self.__getitem__('fullname').rpartition('.')[0]
 
     @property
     def members(self):
+        """Return the names of the objects members in a, possibly empty, list"""
         return self.get('members', [])
 
     def get_parent(self):
+        """Deserialize the object's container"""
         src = self.get('src', None)
         if src is not None:
             parent = self.parent
@@ -136,6 +139,7 @@ class Object(dict):
         return None
 
     def get_member(self, key, default=None):
+        """Deserialize a particular object member"""
         src = '%s/%s.%s' % (dirname(self['src']), self['fullname'], key)
         try:
             return self.from_json(src)
@@ -143,7 +147,11 @@ class Object(dict):
             return default
 
     def get_members(self):
+        """Deserialize all members"""
         return [self.get_member(m) for m in self.get('members', ())]
+
+    def __dir__(self):
+        return self.members
 
 Object.__getattr__ = dict.__getitem__
 Object.__setattr__ = dict.__setitem__
@@ -272,11 +280,12 @@ class Parser(object):
         """Convert the recursive `iterparse` results to a flat iterable"""
         def visit(iterable):
             for info, children in iterable:
-                members = []
+                allmembers = []
                 for child in children:
                     for item in visit(child):
-                        members.append(item['fullname'].rpartition('.')[2])
+                        allmembers.append(item['fullname'].rpartition('.'))
                         yield item
+                members = [m[2] for m in allmembers if m[0] == info['fullname']]
                 if members:
                     info['members'] = members
                 yield info
@@ -378,4 +387,12 @@ class Inspector(object):
         if not isinstance(doc, types.StringTypes):
             return None
         return doc
+
+    @staticmethod
+    def hasattr(obj, attr):
+        return attr in obj.members
+
+    @staticmethod
+    def getattr(obj, attr, default=None):
+        return obj.get_member(attr, default)
 
