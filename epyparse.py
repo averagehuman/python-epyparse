@@ -98,65 +98,6 @@ def objectify(json_file):
     """
     return Object.from_json(json_file)
 
-class Object(dict):
-    """
-    A dict subclass representing any API object.
-    """
-
-    @classmethod
-    def from_json(cls, path):
-        """
-        Rehydrate a serialized Object.
-        """
-        with open(path) as fp:
-            obj = cls(json.load(fp))
-        obj['src'] = path
-        return obj
-
-    @property
-    def name(self):
-        """Shorthand for the last item in the dotted string"""
-        return self.__getitem__('fullname').rpartition('.')[2]
-
-    @property
-    def parent(self):
-        """Return the name of the object's containing object"""
-        return self.__getitem__('fullname').rpartition('.')[0]
-
-    @property
-    def members(self):
-        """Return the names of the objects members in a, possibly empty, list"""
-        return self.get('members', [])
-
-    def get_parent(self):
-        """Deserialize the object's container"""
-        src = self.get('src', None)
-        if src is not None:
-            parent = self.parent
-            if parent:
-                fname = '%s/%s' % (dirname(src), parent)
-                return self.from_json(fname)
-        return None
-
-    def get_member(self, key, default=None):
-        """Deserialize a particular object member"""
-        src = '%s/%s.%s' % (dirname(self['src']), self['fullname'], key)
-        try:
-            return self.from_json(src)
-        except IOError:
-            return default
-
-    def get_members(self):
-        """Deserialize all members"""
-        return [self.get_member(m) for m in self.get('members', ())]
-
-    def __dir__(self):
-        return self.members
-
-Object.__getattr__ = dict.__getitem__
-Object.__setattr__ = dict.__setitem__
-Object.__delattr__ = dict.__delitem__
-
 class Parser(object):
     func_arg_items = (
         'vararg', 'kwarg', 'lineno', 'return_descr', 'return_type', 
@@ -248,7 +189,7 @@ class Parser(object):
             fullname=str(apidoc.canonical_name).lstrip('.'),
         )
         if notnull(apidoc.docstring):
-            info['__doc__'] = inspect.cleandoc(apidoc.docstring)
+            info['docstring'] = inspect.cleandoc(apidoc.docstring)
         apitype = type(apidoc)
         self._update(info, apidoc, apitype, parent_type)
         try:
@@ -288,6 +229,10 @@ class Parser(object):
                 members = [m[2] for m in allmembers if m[0] == info['fullname']]
                 if members:
                     info['members'] = members
+                info['attributes'] = {
+                    '__doc__': info.pop('docstring', ''),
+                    '__name__': info['fullname'].rpartition('.')[2],
+                }
                 yield info
         return visit(self.iterparse(name_or_path))
 
@@ -318,7 +263,7 @@ class Parser(object):
                         args.append('**' + opt)
                     out.write('(%s)' % ', '.join(args))
                 out.write(':\n')
-                doc = info.get('__doc__', '')
+                doc = info.get('docstring', '')
                 lead = indent + tab
                 if typ == 'module':
                     lead = lead[:-len(tab)]
@@ -332,6 +277,87 @@ class Parser(object):
                 for child in children:
                     visit(child, level)
         visit(self.iterparse(name_or_path, reverse=reverse))
+
+class Object(dict):
+    """
+    A dict subclass representing any API object.
+    """
+
+    @classmethod
+    def from_json(cls, path):
+        """
+        Rehydrate a serialized Object.
+        """
+        with open(path) as fp:
+            obj = cls(json.load(fp))
+        obj['src'] = path
+        obj['attributes']['__dict__'] = obj.to_dict()
+        return obj
+
+    @property
+    def name(self):
+        """Shorthand for the last item in the dotted string"""
+        return self.__getitem__('fullname').rpartition('.')[2]
+
+    @property
+    def parent(self):
+        """Return the name of the object's containing object"""
+        return self.__getitem__('fullname').rpartition('.')[0]
+
+    @property
+    def members(self):
+        """Return the names of the objects members in a, possibly empty, list"""
+        return self.get('members', [])
+
+    def get_parent(self):
+        """Deserialize the object's container"""
+        src = self.get('src', None)
+        if src is not None:
+            parent = self.parent
+            if parent:
+                fname = '%s/%s' % (dirname(src), parent)
+                return self.from_json(fname)
+        return None
+
+    def get_member(self, key, default=None):
+        """Deserialize a particular object member"""
+        src = '%s/%s.%s' % (dirname(self['src']), self['fullname'], key)
+        try:
+            return self.from_json(src)
+        except IOError:
+            return default
+
+    def get_members(self):
+        """Deserialize all members"""
+        return [self.get_member(m) for m in self.get('members', ())]
+
+    def get_attribute(self, key, default=None):
+        return self.attributes.get(key, default)
+
+    def __dir__(self):
+        return self.members + self.attributes.keys()
+
+    @property
+    def __doc__(self):
+        return self.get_attribute('__doc__')
+
+    @property
+    def __name__(self):
+        return self.get_attribute('__name__')
+
+    def to_dict(self):
+        d = dict(self.attributes)
+        for m in self.members:
+            d[m] = self.get_member(m)
+        return d
+
+    @property
+    def __dict__(self):
+        return self.attributes.setdefault('__dict__', self.to_dict())
+
+Object.__getattr__ = dict.__getitem__
+Object.__setattr__ = dict.__setitem__
+Object.__delattr__ = dict.__delitem__
 
 class Inspector(object):
 
@@ -352,7 +378,11 @@ class Inspector(object):
         return obj.get('type') == 'function' and obj.get('is_method')
 
     @staticmethod
-    def isroutine(object):
+    def isclassmethod(obj):
+        return obj.get('type') == 'classmethod'
+
+    @staticmethod
+    def isroutine(obj):
         return obj.get('type') == 'function'
 
     @staticmethod
@@ -381,8 +411,8 @@ class Inspector(object):
         indented to line up with blocks of code, any whitespace than can be
         uniformly removed from the second line onwards is removed."""
         try:
-            doc = object['__doc__']
-        except KeyError:
+            doc = obj.__doc__
+        except AttributeError:
             return None
         if not isinstance(doc, types.StringTypes):
             return None
@@ -390,9 +420,16 @@ class Inspector(object):
 
     @staticmethod
     def hasattr(obj, attr):
-        return attr in obj.members
+        if not isinstance(obj, Object):
+            return False
+        return attr in obj.attributes or attr in obj.members
 
     @staticmethod
     def getattr(obj, attr, default=None):
-        return obj.get_member(attr, default)
+        if not isinstance(obj, Object):
+            return default
+        try:
+            return obj.attributes[attr]
+        except KeyError:
+            return obj.get_member(attr, default)
 

@@ -102,7 +102,7 @@ Parse module::
 
     >>> d = parsed('epydoc.apidoc')
     >>> sorted(d.keys())
-    ['__doc__', 'children', 'fullname', 'type']
+    ['children', 'docstring', 'fullname', 'type']
     >>> d['type']
     'module'
     >>> for item in sorted(d['children'], key=lambda d: (d['type'], d['fullname'])):
@@ -228,7 +228,7 @@ Deserialize to `Object`
 The returned `Object` type is a dict subclass::
 
     >>> sorted(obj.keys())
-    [u'__doc__', u'args', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
+    [u'args', u'attributes', u'fullname', u'is_method', u'lineno', u'params', 'src', u'type']
 
 with attribute-style access::
 
@@ -314,22 +314,48 @@ hasattr::
 
     >>> hasattr(APIDoc, 'merge_and_overwrite')
     True
-    >>> Inspector.hasattr(parent, 'merge_and_overwrite')
+    >>> Inspector.hasattr(APIDoc_obj, 'merge_and_overwrite')
     True
-    >>> Inspector.hasattr(parent, 'somethingsomethingorangessomething')
+    >>> Inspector.hasattr(APIDoc_obj, 'somethingsomethingorangessomething')
     False
 
 dir
 ---
 
     >>> dir(merge_and_overwrite_obj)
-    []
-    >>> sorted(dir(APIDoc_obj))[:6]
-    [u'__cmp__', u'__hash__', u'__init__', u'__repr__', u'apidoc_links', u'is_detailed']
+    ['__dict__', u'__doc__', u'__name__']
+    >>> sorted(dir(APIDoc_obj))[:8]
+    [u'__cmp__', '__dict__', u'__doc__', u'__hash__', u'__init__', u'__name__', u'__repr__', u'apidoc_links']
     >>> module_obj = objectify('TESTOUT/epydoc.apidoc')
-    >>> sorted(dir(module_obj))[:6]
-    [u'APIDoc', u'ClassDoc', u'ClassMethodDoc', u'DocIndex', u'DottedName', u'GenericValueDoc']
+    >>> sorted(dir(module_obj))[:7]
+    [u'APIDoc', u'ClassDoc', u'ClassMethodDoc', u'DocIndex', u'DottedName', u'GenericValueDoc', u'ModuleDoc']
 
+__doc__
+-------
+
+    >>> hasattr(APIDoc.merge_and_overwrite, '__doc__')
+    True
+    >>> hasattr(merge_and_overwrite_obj, '__doc__')
+    True
+    >>> Inspector.hasattr(merge_and_overwrite_obj, '__doc__')
+    True
+    >>> actual = ''.join(
+    ...   s.strip() for s in APIDoc.merge_and_overwrite.__doc__.splitlines() if s.strip()
+    ... )
+    ...
+    >>> serialized = ''.join(
+    ...   s.strip() for s in merge_and_overwrite_obj.__doc__.splitlines() if s.strip()
+    ... )
+    ...
+    >>> assert len(actual) and len(serialized)
+    >>> assert actual == serialized
+
+__dict__
+--------
+
+    >>> Inspector.hasattr(merge_and_overwrite_obj, '__dict__')
+    True
+    >>> Inspector.getattr(merge_and_overwrite_obj, '__dict__')
 
 Tidy up::
 
