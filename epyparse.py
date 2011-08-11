@@ -108,6 +108,14 @@ class Parser(object):
 
     def _update_function(self, info, apidoc):
         """update a function object's api info"""
+        info['type'] = 'function'
+        try:
+            decorators = apidoc.decorators
+        except:
+            pass
+        else:
+            if decorators:
+                info['decorators'] = decorators
         for attr in self.func_arg_items:
             val = getattr(apidoc, attr, None)
             if notnull(val):
@@ -136,10 +144,19 @@ class Parser(object):
                 info['args'] = args
 
     def _update_class(self, info, apidoc):
-        pass
+        if info['fullname'] == 'webob.Response':
+            pass#raise Exception(apidoc)
 
     def _update_module(self, info, apidoc):
         pass
+
+    def _update_classmethod(self, info, apidoc):
+        self._update_function(info, apidoc)
+        assert 'classmethod' in info['decorators']
+
+    def _update_staticmethod(self, info, apidoc):
+        self._update_function(info, apidoc)
+        assert 'staticmethod' in info['decorators']
 
     def _update(self, info, apidoc, apitype, parent_type):
         objtype = None
@@ -151,8 +168,8 @@ class Parser(object):
         else:
             # name after apitype without the final 'Doc'
             objtype = apitype.__name__.lower()[:-3]
-        info['type'] = objtype
         getattr(self, '_update_' + objtype, lambda i, a: None)(info, apidoc)
+        info.setdefault('type', objtype)
 
     @staticmethod
     def get_object_api_doc(name_or_path):
@@ -174,11 +191,13 @@ class Parser(object):
         the moment because we are only interested in modules, classes and
         functions, but a more thorough interrogation of the object will
         be required if we want to handle imports and class attributes etc.
+
         """
         if isinstance(apidoc, basestring):
             apidoc = self.get_object_api_doc(apidoc)
         skip = False
         try:
+            fullname=str(apidoc.canonical_name)#.lstrip('.')
             name = apidoc.canonical_name[-1]
             skip = name[0] == '_' and name[1] != '_'
         except:
@@ -186,7 +205,7 @@ class Parser(object):
         if skip:
             raise StopIteration
         info = dict(
-            fullname=str(apidoc.canonical_name).lstrip('.'),
+            fullname=fullname,
         )
         if notnull(apidoc.docstring):
             info['docstring'] = inspect.cleandoc(apidoc.docstring)
@@ -198,7 +217,11 @@ class Parser(object):
             children = ()
         else:
             vals = sorted(vals, key=sort_key(apitype, reverse))
-            children = (self.iterparse(val.value, parent_type=apitype, reverse=reverse) for val in vals)
+            children = (
+                self.iterparse(
+                    val.value, parent_type=apitype, reverse=reverse
+                ) for val in vals if not val.is_alias
+            )
         yield info, children
 
     def parse(self, name_or_path):
@@ -240,16 +263,23 @@ class Parser(object):
         """Pretty print the `iterparse` results."""
         tab = ' ' * 4
         quote = '"""'
+        eol = '\n'
         def visit(iterable, level=0):
             indent = level * tab
+            division = indent + '#' * (80-len(indent)) + eol
             for info, children in iterable:
                 name = info['fullname'].rpartition('.')[2]
                 typ = info['type']
                 if typ == 'function':
                     typ = 'def'
-                elif typ == 'module':
-                    name = info['fullname']
-                out.write(indent + typ + ' ' + name)
+                    for dec in info.get('decorators', ()):
+                        out.write('%s@%s%s' % (indent, dec, eol))
+                if typ == 'module':
+                    out.write(division)
+                    out.write('#    %s%s' % (info['fullname'], eol))
+                    out.write(division)
+                else:
+                    out.write(indent + typ + ' ' + name)
                 if typ == 'def':
                     args = info.get('args', [])
                     params = info.get('params')
@@ -262,10 +292,11 @@ class Parser(object):
                     if opt:
                         args.append('**' + opt)
                     out.write('(%s)' % ', '.join(args))
-                out.write(':\n')
                 doc = info.get('docstring', '')
                 lead = indent + tab
-                if typ == 'module':
+                if typ != 'module':
+                    out.write(':\n')
+                else:
                     lead = lead[:-len(tab)]
                 out.write(lead + quote + '\n')
                 for line in doc.splitlines():
@@ -334,6 +365,9 @@ class Object(dict):
     def get_attribute(self, key, default=None):
         return self.attributes.get(key, default)
 
+    def get_decorators(self):
+        return self.setdefault('decorators', [])
+
     def __dir__(self):
         return self.members + self.attributes.keys()
 
@@ -379,7 +413,11 @@ class Inspector(object):
 
     @staticmethod
     def isclassmethod(obj):
-        return obj.get('type') == 'classmethod'
+        return 'classmethod' in obj.get_decorators()
+
+    @staticmethod
+    def isstaticmethod(obj):
+        return 'staticmethod' in obj.get_decorators()
 
     @staticmethod
     def isroutine(obj):

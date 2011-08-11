@@ -47,7 +47,9 @@ Top-level functions are `parsed`, `flattened`, `pprint` and `objectify`::
 Input can be a file path::
 
     >>> pprint('setup.py')
-    module setup:
+    ################################################################################
+    #    setup
+    ################################################################################
     """
     """
     <BLANKLINE>
@@ -148,7 +150,6 @@ with no file extension::
     epydoc.apidoc.APIDoc.apidoc_links
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
-    epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
     epydoc.apidoc.APIDoc
@@ -271,7 +272,6 @@ Similarly, `Object.members` returns the names of the object's members, if any::
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
     epydoc.apidoc.APIDoc.pp
-    epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
 
 and `Object.get_members` deserializes each member::
@@ -285,7 +285,6 @@ and `Object.get_members` deserializes each member::
     function  ->  apidoc_links
     function  ->  is_detailed
     function  ->  merge_and_overwrite
-    function  ->  pp
     function  ->  pp
     function  ->  specialize_to
 
@@ -355,7 +354,12 @@ __dict__
 
     >>> Inspector.hasattr(merge_and_overwrite_obj, '__dict__')
     True
-    >>> Inspector.getattr(merge_and_overwrite_obj, '__dict__')
+    >>> d = Inspector.getattr(merge_and_overwrite_obj, '__dict__')
+    >>> d['__name__']
+    u'merge_and_overwrite'
+    >>> print d['__doc__'] #doctest: +ELLIPSIS
+    Combine C{self} and C{other} into a X{merged object}, such
+    that any changes made to one will affect the other.  Any...
 
 Tidy up::
 
