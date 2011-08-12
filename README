@@ -53,6 +53,11 @@ Input can be a file path::
     """
     """
     <BLANKLINE>
+    import distutils.core.setup
+    import sys
+    import os
+    import epyparse
+    <BLANKLINE>
 
 which must exist::
 
@@ -104,7 +109,7 @@ Parse module::
 
     >>> d = parsed('epydoc.apidoc')
     >>> sorted(d.keys())
-    ['children', 'docstring', 'fullname', 'type']
+    ['children', 'docstring', 'fullname', 'imports', 'type']
     >>> d['type']
     'module'
     >>> for item in sorted(d['children'], key=lambda d: (d['type'], d['fullname'])):
@@ -150,6 +155,7 @@ with no file extension::
     epydoc.apidoc.APIDoc.apidoc_links
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
+    epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
     epydoc.apidoc.APIDoc
@@ -272,6 +278,7 @@ Similarly, `Object.members` returns the names of the object's members, if any::
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
     epydoc.apidoc.APIDoc.pp
+    epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
 
 and `Object.get_members` deserializes each member::
@@ -285,6 +292,7 @@ and `Object.get_members` deserializes each member::
     function  ->  apidoc_links
     function  ->  is_detailed
     function  ->  merge_and_overwrite
+    function  ->  pp
     function  ->  pp
     function  ->  specialize_to
 

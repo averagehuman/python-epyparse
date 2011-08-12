@@ -2,7 +2,7 @@
 epyparse.py
 """
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 import os
 import sys
@@ -144,11 +144,16 @@ class Parser(object):
                 info['args'] = args
 
     def _update_class(self, info, apidoc):
-        if info['fullname'] == 'webob.Response':
-            pass#raise Exception(apidoc)
+        pass
 
     def _update_module(self, info, apidoc):
-        pass
+        try:
+            imports = apidoc.imports
+        except AttributeError:
+            imports = []
+        else:
+            imports = [str(x) for x in apidoc.imports]
+        info['imports'] = imports
 
     def _update_classmethod(self, info, apidoc):
         self._update_function(info, apidoc)
@@ -181,7 +186,7 @@ class Parser(object):
                 return parse_docs(name=name_or_path)
         raise IOError("No such file %s" % name_or_path)
 
-    def iterparse(self, apidoc, parent_type=None, reverse=False):
+    def iterparse(self, val, parent_type=None, reverse=False):
         """
         Recursively iterate through the APIDoc objects produced by epydoc.
 
@@ -193,8 +198,12 @@ class Parser(object):
         be required if we want to handle imports and class attributes etc.
 
         """
-        if isinstance(apidoc, basestring):
-            apidoc = self.get_object_api_doc(apidoc)
+        if isinstance(val, basestring):
+            apidoc = self.get_object_api_doc(val)
+            is_alias = False
+        else:
+            apidoc = val.value
+            is_alias = val.is_alias
         skip = False
         try:
             fullname=str(apidoc.canonical_name)#.lstrip('.')
@@ -211,17 +220,26 @@ class Parser(object):
             info['docstring'] = inspect.cleandoc(apidoc.docstring)
         apitype = type(apidoc)
         self._update(info, apidoc, apitype, parent_type)
-        try:
-            vals = apidoc.variables.itervalues()
-        except:
+        if is_alias:
+            info['type'] = 'alias'
+            info['label'] = val.name
+            if val.is_imported:
+                info['ref'] = fullname
+            else:
+                info['ref'] = name
             children = ()
         else:
-            vals = sorted(vals, key=sort_key(apitype, reverse))
-            children = (
-                self.iterparse(
-                    val.value, parent_type=apitype, reverse=reverse
-                ) for val in vals if not val.is_alias
-            )
+            try:
+                vals = apidoc.variables.itervalues()
+            except:
+                children = ()
+            else:
+                vals = sorted(vals, key=sort_key(apitype, reverse))
+                children = (
+                    self.iterparse(
+                        val, parent_type=apitype, reverse=reverse
+                    ) for val in vals#if (apitype is ModuleDoc or not val.is_alias)
+                )
         yield info, children
 
     def parse(self, name_or_path):
@@ -268,7 +286,7 @@ class Parser(object):
             indent = level * tab
             division = indent + '#' * (80-len(indent)) + eol
             for info, children in iterable:
-                name = info['fullname'].rpartition('.')[2]
+                name = info.get('alias') or info['fullname'].rpartition('.')[2]
                 typ = info['type']
                 if typ == 'function':
                     typ = 'def'
@@ -278,6 +296,8 @@ class Parser(object):
                     out.write(division)
                     out.write('#    %s%s' % (info['fullname'], eol))
                     out.write(division)
+                elif typ == 'alias':
+                    out.write('%s%s = %s%s' % (indent, info['label'], info['fullname'], eol))
                 else:
                     out.write(indent + typ + ' ' + name)
                 if typ == 'def':
@@ -294,20 +314,29 @@ class Parser(object):
                     out.write('(%s)' % ', '.join(args))
                 doc = info.get('docstring', '')
                 lead = indent + tab
-                if typ != 'module':
-                    out.write(':\n')
-                else:
+                if typ == 'def' or typ == 'class':
+                    out.write(':' + eol)
+                elif typ == 'module':
                     lead = lead[:-len(tab)]
-                out.write(lead + quote + '\n')
-                for line in doc.splitlines():
-                    out.write(lead + line + '\n')
-                out.write(lead + quote + '\n')
-                out.write('\n')
+                if typ != 'alias':
+                    out.write(lead + quote + eol)
+                    for line in doc.splitlines():
+                        out.write(lead + line + eol)
+                    out.write(lead + quote + eol)
+                out.write(eol)
                 if typ != 'module':
                     level += 1
+                else:
+                    for x in info.get('imports', []):
+                        out.write('import %s%s' % (x, eol))
+                    out.write(eol)
                 for child in children:
                     visit(child, level)
         visit(self.iterparse(name_or_path, reverse=reverse))
+
+potato = parsnip = Parser.get_object_api_doc
+gravy = potato
+
 
 class Object(dict):
     """
