@@ -98,6 +98,19 @@ def objectify(json_file):
     """
     return Object.from_json(json_file)
 
+class Formatter(object):
+
+    @staticmethod
+    def format_signature(info):
+        f = getattr(Formatter, 'format_' + info['type'], None)
+        if f is None:
+            f = Formatter.format_attribute
+        return f(info)
+        
+    @staticmethod
+    def format_attribute(info):
+        return ''
+
 class Parser(object):
     func_arg_items = (
         'vararg', 'kwarg', 'lineno', 'return_descr', 'return_type', 
@@ -105,76 +118,6 @@ class Parser(object):
     func_arg_lists = (
         'arg_descrs', 'arg_types', 'exception_descrs',
     )
-
-    def _update_function(self, info, apidoc):
-        """update a function object's api info"""
-        info['type'] = 'function'
-        try:
-            decorators = apidoc.decorators
-        except:
-            pass
-        else:
-            if decorators:
-                info['decorators'] = decorators
-        for attr in self.func_arg_items:
-            val = getattr(apidoc, attr, None)
-            if notnull(val):
-                attr = attr.replace('return_', 'r')
-                info[attr] = val
-        # function signature
-        args = apidoc.posargs
-        if notnull(args):
-            req_args = []
-            defaults = apidoc.posarg_defaults
-            if notnull(defaults):
-                assert len(args) == len(defaults), "can't resolve function signature"
-                params = []
-                for arg, default in zip(args, defaults):
-                    try:
-                        default = default.summary_pyval_repr().to_plaintext(None)
-                    except AttributeError:
-                        default = None
-                    if default is None:
-                        req_args.append(arg)
-                    else:
-                        params.append([arg, default])
-                info['args'] = req_args
-                info['params'] = params
-            else:
-                info['args'] = args
-
-    def _update_class(self, info, apidoc):
-        pass
-
-    def _update_module(self, info, apidoc):
-        try:
-            imports = apidoc.imports
-        except AttributeError:
-            imports = []
-        else:
-            imports = [str(x) for x in apidoc.imports]
-        info['imports'] = imports
-
-    def _update_classmethod(self, info, apidoc):
-        self._update_function(info, apidoc)
-        assert 'classmethod' in info['decorators']
-
-    def _update_staticmethod(self, info, apidoc):
-        self._update_function(info, apidoc)
-        assert 'staticmethod' in info['decorators']
-
-    def _update(self, info, apidoc, apitype, parent_type):
-        objtype = None
-        if apitype is RoutineDoc:
-            objtype = 'function'
-            if parent_type is ClassDoc:
-                # TODO - review
-                info['is_method'] = True
-        else:
-            # name after apitype without the final 'Doc'
-            objtype = apitype.__name__.lower()[:-3]
-        getattr(self, '_update_' + objtype, lambda i, a: None)(info, apidoc)
-        info.setdefault('type', objtype)
 
     @staticmethod
     def get_object_api_doc(name_or_path):
@@ -186,16 +129,13 @@ class Parser(object):
                 return parse_docs(name=name_or_path)
         raise IOError("No such file %s" % name_or_path)
 
+    @staticmethod
+    def get_formatter():
+        return Formatter
+
     def iterparse(self, val, parent_type=None, reverse=False):
         """
         Recursively iterate through the APIDoc objects produced by epydoc.
-
-        We use a pair of try/except clauses to force any given object to
-        be skipped if it doesn't quack as we would like - ie. if it doesn't
-        have valid 'canonical_name' and 'variables' attributes. This works for
-        the moment because we are only interested in modules, classes and
-        functions, but a more thorough interrogation of the object will
-        be required if we want to handle imports and class attributes etc.
 
         """
         if isinstance(val, basestring):
@@ -221,6 +161,7 @@ class Parser(object):
         apitype = type(apidoc)
         self._update(info, apidoc, apitype, parent_type)
         if is_alias:
+            # potential infinite loop if we recurse into aliases, eg. webob.__init__.py
             info['type'] = 'alias'
             info['label'] = val.name
             if val.is_imported:
@@ -333,6 +274,76 @@ class Parser(object):
                 for child in children:
                     visit(child, level)
         visit(self.iterparse(name_or_path, reverse=reverse))
+
+    def _update_function(self, info, apidoc):
+        """update a function object's api info"""
+        info['type'] = 'function'
+        try:
+            decorators = apidoc.decorators
+        except:
+            pass
+        else:
+            if decorators:
+                info['decorators'] = decorators
+        for attr in self.func_arg_items:
+            val = getattr(apidoc, attr, None)
+            if notnull(val):
+                attr = attr.replace('return_', 'r')
+                info[attr] = val
+        # function signature
+        args = apidoc.posargs
+        if notnull(args):
+            req_args = []
+            defaults = apidoc.posarg_defaults
+            if notnull(defaults):
+                assert len(args) == len(defaults), "can't resolve function signature"
+                params = []
+                for arg, default in zip(args, defaults):
+                    try:
+                        default = default.summary_pyval_repr().to_plaintext(None)
+                    except AttributeError:
+                        default = None
+                    if default is None:
+                        req_args.append(arg)
+                    else:
+                        params.append([arg, default])
+                info['args'] = req_args
+                info['params'] = params
+            else:
+                info['args'] = args
+
+    def _update_class(self, info, apidoc):
+        pass
+
+    def _update_module(self, info, apidoc):
+        try:
+            imports = apidoc.imports
+        except AttributeError:
+            imports = []
+        else:
+            imports = [str(x) for x in apidoc.imports]
+        info['imports'] = imports
+
+    def _update_classmethod(self, info, apidoc):
+        self._update_function(info, apidoc)
+        assert 'classmethod' in info['decorators']
+
+    def _update_staticmethod(self, info, apidoc):
+        self._update_function(info, apidoc)
+        assert 'staticmethod' in info['decorators']
+
+    def _update(self, info, apidoc, apitype, parent_type):
+        objtype = None
+        if apitype is RoutineDoc:
+            objtype = 'function'
+            if parent_type is ClassDoc:
+                # TODO - review
+                info['is_method'] = True
+        else:
+            # name after apitype without the final 'Doc'
+            objtype = apitype.__name__.lower()[:-3]
+        getattr(self, '_update_' + objtype, lambda i, a: None)(info, apidoc)
+        info.setdefault('type', objtype)
 
 potato = parsnip = Parser.get_object_api_doc
 gravy = potato
