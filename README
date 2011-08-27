@@ -369,6 +369,10 @@ __dict__
     Combine C{self} and C{other} into a X{merged object}, such
     that any changes made to one will affect the other.  Any...
 
+Base classes
+------------
+
+
 Tidy up::
 
     >>> import shutil

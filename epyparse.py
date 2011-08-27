@@ -13,7 +13,6 @@ import operator
 import re
 import json
 import inspect
-from itertools import ifilter
 
 from epydoc.docparser import parse_docs
 from epydoc.apidoc import UNKNOWN, ModuleDoc, ClassDoc, RoutineDoc, ValueDoc
@@ -33,7 +32,7 @@ CLASS_ORDER = [
     RoutineDoc,
 ]
 
-RX_DOTTED_NAME = re.compile(r'^[a-zA-Z_]+[a-zA-Z_.]*$')
+RX_DOTTED_NAME = re.compile(r'^[a-zA-Z0-9_.]+$')
 
 def notnull(val):
     """Return True if val is neither None nor UNKNOWN"""
@@ -67,8 +66,9 @@ def sort_key(parent_type, reverse):
     return object_order
 
 __all__ = [
-    'Parser', 'Object',
+    'Parser', 'Object', 'Inspector', 'Formatter',
     'parsed', 'flattened', 'pprint', 'objectify',
+    'MockImportError',
 ]
 
 def parsed(name_or_path):
@@ -97,6 +97,9 @@ def objectify(json_file):
     Convert a JSON-serialized API object to a dict-like object
     """
     return Object.from_json(json_file)
+
+class MockImportError(Exception):
+    pass
 
 class Formatter(object):
 
@@ -179,7 +182,7 @@ class Parser(object):
                 children = (
                     self.iterparse(
                         val, parent_type=apitype, reverse=reverse
-                    ) for val in vals#if (apitype is ModuleDoc or not val.is_alias)
+                    ) for val in vals
                 )
         yield info, children
 
@@ -200,7 +203,7 @@ class Parser(object):
         return visit(self.iterparse(name_or_path))
 
     def flatten(self, name_or_path):
-        """Convert the recursive `iterparse` results to a flat iterable"""
+        """Convert the recursive `iterparse` results to a flat iterable of dicts"""
         def visit(iterable):
             for info, children in iterable:
                 allmembers = []
@@ -313,7 +316,9 @@ class Parser(object):
                 info['args'] = args
 
     def _update_class(self, info, apidoc):
-        pass
+        bases = [str(obj.canonical_name) for obj in apidoc.bases if notnull(obj)]
+        if bases:
+            info['bases'] = bases
 
     def _update_module(self, info, apidoc):
         try:
@@ -365,6 +370,10 @@ class Object(dict):
         obj['attributes']['__dict__'] = obj.to_dict()
         return obj
 
+    def from_name(self, name):
+        path = '%s/%s' % (dirname(self['src']), name)
+        return self.from_json(path)
+
     @property
     def name(self):
         """Shorthand for the last item in the dotted string"""
@@ -379,6 +388,51 @@ class Object(dict):
     def members(self):
         """Return the names of the objects members in a, possibly empty, list"""
         return self.get('members', [])
+
+    @property
+    def imports(self):
+        """Return the names of any imported objects"""
+        return self.get('imports', [])
+
+    def manifest(self, predicate=None):
+        for fname in os.listdir(dirname(self['src'])):
+            if predicate and not predicate(fname):
+                continue
+            yield fname
+
+    def find(self, name, possibles=None):
+        if name == self['fullname']:
+            return self
+        try:
+            return self.from_name(name)
+        except IOError:
+            pass
+        parent, dot, obj_name = name.rpartition('.')
+        obj_name = dot + obj_name
+        if possibles is None:
+            possibles = set(self.manifest(lambda fname: fname.endswith(obj_name)))
+            if not possibles:
+                raise MockImportError(name)
+            elif len(possibles) == 1:
+                return self.from_name(possibles.pop())
+        defining_module = None
+        while parent:
+            if parent == self['fullname'] and self['type'] == 'module':
+                defining_module = self
+                break
+            try:
+                obj = self.from_name(parent)
+            except:
+                parent = parent.rpartition('.')[0]
+            else:
+                if obj['type'] == 'module':
+                    defining_module = obj
+                    break
+        if defining_module is not None:
+            for ref in reversed(defining_module.imports):
+                if ref.endswith(obj_name):
+                    return self.from_name(ref)
+        raise MockImportError(name)
 
     def get_parent(self):
         """Deserialize the object's container"""
@@ -437,31 +491,35 @@ class Inspector(object):
 
     @staticmethod
     def ismodule(obj):
-        return obj.get('type') == 'module'
+        return obj and obj.get('type') == 'module'
 
     @staticmethod
     def isclass(obj):
-        return obj.get('type') == 'class'
+        return obj and obj.get('type') == 'class'
 
     @staticmethod
     def isfunction(obj):
-        return obj.get('type') == 'function'
+        return obj and obj.get('type') == 'function'
 
     @staticmethod
     def ismethod(obj):
-        return obj.get('type') == 'function' and obj.get('is_method')
+        return obj and obj.get('type') == 'function' and obj.get('is_method')
 
     @staticmethod
     def isclassmethod(obj):
-        return 'classmethod' in obj.get_decorators()
+        return obj and 'classmethod' in obj.get_decorators()
 
     @staticmethod
     def isstaticmethod(obj):
-        return 'staticmethod' in obj.get_decorators()
+        return obj and 'staticmethod' in obj.get_decorators()
+
+    @staticmethod
+    def isproperty(obj):
+        return obj and 'property' in obj.get_decorators()
 
     @staticmethod
     def isroutine(obj):
-        return obj.get('type') == 'function'
+        return obj and obj.get('type') == 'function'
 
     @staticmethod
     def getargspec(obj):
