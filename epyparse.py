@@ -34,6 +34,34 @@ CLASS_ORDER = [
 
 RX_DOTTED_NAME = re.compile(r'^[a-zA-Z0-9_.]+$')
 
+REPR_MAP = {
+    u'None': None,
+    u'True': True,
+    u'False': False,
+}
+
+def param_repr(val):
+    """
+    Get the value not the repr for function params
+    """
+    try:
+        return REPR_MAP[val]
+    except KeyError:
+        if val not in 'jJ':
+            ret = val
+            try:
+                ret = complex(val)
+            except ValueError:
+                # not a number
+                return val
+            if 'j' in val:
+                return ret
+            elif '.' in val:
+                return float(val)
+            else:
+                return int(val)
+    return val
+
 def notnull(val):
     """Return True if val is neither None nor UNKNOWN"""
     return not any(operator.is_(val, obj) for obj in NULLS)
@@ -248,7 +276,8 @@ class Parser(object):
                     args = info.get('args', [])
                     params = info.get('params')
                     if params:
-                        args.extend('='.join(pair) for pair in params)
+                        args.extend('%s=%s' % tuple(pair) for pair in params)
+                        #args.extend('='.join(pair) for pair in params)
                     opt = info.get('vararg')
                     if opt:
                         args.append('*' + opt)
@@ -309,7 +338,7 @@ class Parser(object):
                     if default is None:
                         req_args.append(arg)
                     else:
-                        params.append([arg, default])
+                        params.append([arg, param_repr(default)])
                 info['args'] = req_args
                 info['params'] = params
             else:

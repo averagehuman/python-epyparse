@@ -246,7 +246,7 @@ with attribute-style access::
     >>> obj.lineno * 0
     0
     >>> obj.params
-    [[u'ignore_hash_conflict', u'False']]
+    [[u'ignore_hash_conflict', False]]
     >>> obj.name
     u'merge_and_overwrite'
 
@@ -310,7 +310,7 @@ argspec (not identical but good enough for displaying the function signature)::
     >>> inspect.getargspec(APIDoc.merge_and_overwrite)
     ArgSpec(args=['self', 'other', 'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(False,))
     >>> Inspector.getargspec(merge_and_overwrite_obj)
-    ArgSpec(args=[u'self', u'other', u'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(u'False',))
+    ArgSpec(args=[u'self', u'other', u'ignore_hash_conflict'], varargs=None, keywords=None, defaults=(False,))
 
     >>> inspect.getargspec(APIDoc.apidoc_links)
     ArgSpec(args=['self'], varargs=None, keywords='filters', defaults=None)
