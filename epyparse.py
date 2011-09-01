@@ -2,8 +2,6 @@
 epyparse.py
 """
 
-__version__ = '0.2.2'
-
 import os
 import sys
 import types
