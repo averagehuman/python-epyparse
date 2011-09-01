@@ -12,7 +12,7 @@ changes = open("docs/changes.rst").read()
 long_description = readme + "\n\n" + changes
 requires = [
     'epydoc',
-    'modargs',
+    'python-modargs',
 ]
 
 setup(

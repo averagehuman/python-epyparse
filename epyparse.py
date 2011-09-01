@@ -179,7 +179,8 @@ class Parser(object):
         try:
             fullname=str(apidoc.canonical_name)#.lstrip('.')
             name = apidoc.canonical_name[-1]
-            skip = name[0] == '_' and name[1] != '_'
+            #skip = name[0] == '_' and name[1] != '_'
+            skip = not notnull(name)
         except:
             skip = True
         if skip:

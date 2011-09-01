@@ -127,6 +127,12 @@ Parse module::
     class  ->  epydoc.apidoc.StaticMethodDoc
     class  ->  epydoc.apidoc.ValueDoc
     class  ->  epydoc.apidoc.VariableDoc
+    class  ->  epydoc.apidoc._Sentinel
+    function  ->  epydoc.apidoc._flatten
+    function  ->  epydoc.apidoc._pp_apidoc
+    function  ->  epydoc.apidoc._pp_dict
+    function  ->  epydoc.apidoc._pp_list
+    function  ->  epydoc.apidoc._pp_val
     function  ->  epydoc.apidoc.pp_apidoc
     function  ->  epydoc.apidoc.reachable_valdocs
 
@@ -146,12 +152,19 @@ with no file extension::
     ...     with open('TESTOUT/' + item['fullname'], 'w+b') as fp:
     ...         json.dump(item, fp)
     ...
+    epydoc.apidoc._flatten
+    epydoc.apidoc._pp_apidoc
+    epydoc.apidoc._pp_dict
+    epydoc.apidoc._pp_list
+    epydoc.apidoc._pp_val
     epydoc.apidoc.pp_apidoc
     epydoc.apidoc.reachable_valdocs
     epydoc.apidoc.APIDoc.__cmp__
     epydoc.apidoc.APIDoc.__hash__
     epydoc.apidoc.APIDoc.__init__
     epydoc.apidoc.APIDoc.__repr__
+    epydoc.apidoc.APIDoc._debug_setattr
+    epydoc.apidoc.APIDoc._debug_setattr
     epydoc.apidoc.APIDoc.apidoc_links
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
@@ -159,6 +172,10 @@ with no file extension::
     epydoc.apidoc.APIDoc.pp
     epydoc.apidoc.APIDoc.specialize_to
     epydoc.apidoc.APIDoc
+    epydoc.apidoc.ClassDoc._c3_merge
+    epydoc.apidoc.ClassDoc._c3_mro
+    epydoc.apidoc.ClassDoc._dfs_bases
+    epydoc.apidoc.ClassDoc._report_bad_base
     epydoc.apidoc.ClassDoc.apidoc_links
     epydoc.apidoc.ClassDoc.is_exception
     epydoc.apidoc.ClassDoc.is_newstyle_class
@@ -168,6 +185,10 @@ with no file extension::
     epydoc.apidoc.ClassDoc
     epydoc.apidoc.ClassMethodDoc
     epydoc.apidoc.DocIndex.__init__
+    epydoc.apidoc.DocIndex._get
+    epydoc.apidoc.DocIndex._get_from
+    epydoc.apidoc.DocIndex._get_module_classes
+    epydoc.apidoc.DocIndex._update_funcid_to_doc
     epydoc.apidoc.DocIndex.container
     epydoc.apidoc.DocIndex.find
     epydoc.apidoc.DocIndex.get_valdoc
@@ -196,6 +217,7 @@ with no file extension::
     epydoc.apidoc.ModuleDoc.select_variables
     epydoc.apidoc.ModuleDoc
     epydoc.apidoc.NamespaceDoc.__init__
+    epydoc.apidoc.NamespaceDoc._init_grouping
     epydoc.apidoc.NamespaceDoc.apidoc_links
     epydoc.apidoc.NamespaceDoc.group_names
     epydoc.apidoc.NamespaceDoc.init_sorted_variables
@@ -219,9 +241,14 @@ with no file extension::
     epydoc.apidoc.ValueDoc
     epydoc.apidoc.VariableDoc.__init__
     epydoc.apidoc.VariableDoc.__repr__
+    epydoc.apidoc.VariableDoc._get_defining_module
     epydoc.apidoc.VariableDoc.apidoc_links
     epydoc.apidoc.VariableDoc.is_detailed
     epydoc.apidoc.VariableDoc
+    epydoc.apidoc._Sentinel.__init__
+    epydoc.apidoc._Sentinel.__nonzero__
+    epydoc.apidoc._Sentinel.__repr__
+    epydoc.apidoc._Sentinel
     epydoc.apidoc
 
 Deserialize to `Object`
@@ -274,6 +301,8 @@ Similarly, `Object.members` returns the names of the object's members, if any::
     epydoc.apidoc.APIDoc.__hash__
     epydoc.apidoc.APIDoc.__init__
     epydoc.apidoc.APIDoc.__repr__
+    epydoc.apidoc.APIDoc._debug_setattr
+    epydoc.apidoc.APIDoc._debug_setattr
     epydoc.apidoc.APIDoc.apidoc_links
     epydoc.apidoc.APIDoc.is_detailed
     epydoc.apidoc.APIDoc.merge_and_overwrite
@@ -289,6 +318,8 @@ and `Object.get_members` deserializes each member::
     function  ->  __hash__
     function  ->  __init__
     function  ->  __repr__
+    alias  ->  _debug_setattr
+    alias  ->  _debug_setattr
     function  ->  apidoc_links
     function  ->  is_detailed
     function  ->  merge_and_overwrite
@@ -331,8 +362,10 @@ dir
 
     >>> dir(merge_and_overwrite_obj)
     ['__dict__', u'__doc__', u'__name__']
-    >>> sorted(dir(APIDoc_obj))[:8]
-    [u'__cmp__', '__dict__', u'__doc__', u'__hash__', u'__init__', u'__name__', u'__repr__', u'apidoc_links']
+    >>> sorted(dir(APIDoc_obj))[:7]
+    [u'__cmp__', '__dict__', u'__doc__', u'__hash__', u'__init__', u'__name__', u'__repr__']
+    >>> sorted(dir(APIDoc_obj))[7:13]
+    [u'_debug_setattr', u'_debug_setattr', u'apidoc_links', u'is_detailed', u'merge_and_overwrite', u'pp']
     >>> module_obj = objectify('TESTOUT/epydoc.apidoc')
     >>> sorted(dir(module_obj))[:7]
     [u'APIDoc', u'ClassDoc', u'ClassMethodDoc', u'DocIndex', u'DottedName', u'GenericValueDoc', u'ModuleDoc']
